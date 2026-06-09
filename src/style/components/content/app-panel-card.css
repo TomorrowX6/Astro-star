@@ -16,6 +16,15 @@
   --friend-links-gap: 0.9rem;
   --friend-link-card-min: 15rem;
   --friend-link-card-max: 19rem;
+  --friend-link-card-radius: var(--radius-md);
+  --friend-link-card-border: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.64) 0%,
+    rgba(255, 255, 255, 0.34) 46%,
+    rgba(255, 255, 255, 0.12) 100%
+  );
+  --friend-link-card-glass: rgba(255, 255, 255, 0.22);
+  --friend-link-card-tint: rgba(255, 255, 255, 0.08);
   display: grid;
   grid-template-columns: repeat(
     auto-fit,
@@ -53,31 +62,57 @@ html[data-js="true"] .friend-links-grid[data-friend-links-state="ready"] {
   align-self: stretch;
   padding: 0.1rem 0.8rem;
   position: relative;
-  border-color: var(--border-soft);
-  border-radius: var(--radius-md);
-  background-color: color-mix(in srgb, var(--line) 2.5%, transparent);
+  isolation: isolate;
+  border-color: transparent;
+  border-radius: var(--friend-link-card-radius);
+  background: var(--friend-link-card-glass);
+  box-shadow:
+    0 1px 24px -1px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(20px) saturate(1.25);
+  -webkit-backdrop-filter: blur(20px) saturate(1.25);
   min-height: 4.45rem;
   overflow: hidden;
-  transition: background-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s ease;
 }
 
 .friend-links-grid .app-panel-item--link::before {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 3;
+  padding: 1px;
+  border-radius: inherit;
+  background: var(--friend-link-card-border);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+.friend-links-grid .app-panel-item--link::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
   z-index: 1;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, #000 34%, transparent) 0%,
-    color-mix(in srgb, #000 18%, transparent) 44%,
-    transparent 100%
-  );
-  opacity: 0.72;
+  border-radius: calc(var(--friend-link-card-radius) - 1px);
+  background: var(--friend-link-card-tint);
+  opacity: 0.78;
   pointer-events: none;
 }
 
 .friend-link-card-bg {
   position: absolute;
+  z-index: 0;
   inset-block: 50%;
   inset-inline-start: clamp(-2.2rem, -9%, -0.55rem);
   width: clamp(8.8rem, 66%, 13.6rem);
@@ -85,7 +120,7 @@ html[data-js="true"] .friend-links-grid[data-friend-links-state="ready"] {
   aspect-ratio: 1;
   border-radius: 999px;
   object-fit: cover;
-  opacity: 0.24;
+  opacity: 0.28;
   filter: saturate(1.08) brightness(0.88);
   mask-image: linear-gradient(90deg, #000 0%, #000 34%, transparent 82%);
   -webkit-mask-image: linear-gradient(
@@ -221,11 +256,23 @@ html[data-js="true"]
 }
 
 .friend-links-grid .app-panel-item--link:hover {
-  background-color: color-mix(in srgb, var(--line) 4.8%, transparent);
+  background-color: color-mix(in srgb, #fff 8%, transparent);
+  box-shadow:
+    0 1px 28px -1px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.friend-links-grid .app-panel-item--link:hover::before {
+  opacity: 1;
+}
+
+.friend-links-grid .app-panel-item--link:hover::after {
+  opacity: 0.86;
 }
 
 .friend-links-grid .app-panel-item--link:hover .friend-link-card-bg {
-  opacity: 0.3;
+  opacity: 0.34;
   filter: saturate(1.14) brightness(0.82);
 }
 
@@ -240,11 +287,22 @@ html[data-js="true"]
 .friend-links-grid .app-panel-item--link:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--line) 28%, transparent);
   outline-offset: 0.2rem;
-  background-color: color-mix(in srgb, var(--line) 4.8%, transparent);
+  background-color: color-mix(in srgb, #fff 8%, transparent);
+  box-shadow:
+    0 1px 28px -1px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.friend-links-grid .app-panel-item--link:focus-visible::before {
+  opacity: 1;
+}
+
+.friend-links-grid .app-panel-item--link:focus-visible::after {
+  opacity: 0.86;
 }
 
 .friend-links-grid .app-panel-item--link:focus-visible .friend-link-card-bg {
-  opacity: 0.3;
+  opacity: 0.34;
   filter: saturate(1.14) brightness(0.82);
 }
 
@@ -332,6 +390,11 @@ html[data-js="true"]
   .friend-links-grid {
     --friend-links-gap: 1rem;
   }
+}
+
+:root[data-theme="dark"] .friend-links-grid {
+  --friend-link-card-glass: rgba(255, 255, 255, 0.09);
+  --friend-link-card-tint: rgba(255, 255, 255, 0.04);
 }
 
 @media (prefers-reduced-motion: reduce) {
