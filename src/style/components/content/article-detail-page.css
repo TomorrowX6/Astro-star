@@ -270,6 +270,102 @@ html:lang(zh-CN) .content-page--article {
   text-decoration-color: color-mix(in srgb, var(--line) 42%, transparent);
 }
 
+.article-comments-thread [data-waline] :is(h1, h2, h3, h4, h5, h6) {
+  margin: 0.64em 0 0.28em;
+  color: color-mix(in srgb, var(--line) 82%, transparent);
+  font-weight: 700;
+  line-height: 1.26;
+}
+
+.article-comments-thread [data-waline] h1 {
+  font-size: 1.2em;
+}
+
+.article-comments-thread [data-waline] h2 {
+  font-size: 1.14em;
+}
+
+.article-comments-thread [data-waline] h3 {
+  font-size: 1.08em;
+}
+
+.article-comments-thread [data-waline] :is(h4, h5, h6) {
+  font-size: 1.02em;
+}
+
+.article-comments-thread [data-waline] :is(ol, ul) {
+  margin: 0.34rem 0 0.42rem 1.16rem;
+  padding: 0;
+}
+
+.article-comments-thread [data-waline] li {
+  padding-inline-start: 0.08rem;
+}
+
+.article-comments-thread [data-waline] li + li {
+  margin-top: 0.14rem;
+}
+
+.article-comments-thread [data-waline] li > :first-child {
+  margin-top: 0;
+}
+
+.article-comments-thread [data-waline] li > :last-child {
+  margin-bottom: 0;
+}
+
+.article-comments-thread [data-waline] li:has(> input[type="checkbox"]) {
+  list-style: none;
+}
+
+.article-comments-thread [data-waline] input[type="checkbox"] {
+  width: 0.95em;
+  height: 0.95em;
+  margin: 0 0.36em 0 -1.14rem;
+  vertical-align: -0.14em;
+  accent-color: color-mix(in srgb, var(--line) 66%, transparent);
+}
+
+.article-comments-thread [data-waline] table {
+  display: block;
+  max-width: 100%;
+  margin: 0.5rem 0;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 0.95em;
+  -webkit-overflow-scrolling: touch;
+}
+
+.article-comments-thread [data-waline] :is(th, td) {
+  padding: 0.34rem 0.46rem;
+  border: 1px solid color-mix(in srgb, var(--line) 12%, transparent);
+  text-align: start;
+  vertical-align: top;
+}
+
+.article-comments-thread [data-waline] th {
+  background: color-mix(in srgb, var(--comment-paper) 86%, var(--line) 6%);
+  color: color-mix(in srgb, var(--line) 78%, transparent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.article-comments-thread [data-waline] td {
+  color: color-mix(in srgb, var(--line) 66%, transparent);
+}
+
+.article-comments-thread
+  [data-waline]
+  img:not(.wl-emoji):not(.vemoji):not(.wl-user-avatar) {
+  display: block;
+  max-width: 100%;
+  max-height: min(22rem, 55vh);
+  margin: 0.5rem 0;
+  border-radius: 0.4rem;
+  object-fit: contain;
+}
+
 .article-comments-thread [data-waline] code,
 .article-comments-thread [data-waline] pre {
   border-radius: 0.32rem;
@@ -289,6 +385,54 @@ html:lang(zh-CN) .content-page--article {
   border-inline-start: 1px solid
     color-mix(in srgb, var(--line) 22%, transparent);
   color: color-mix(in srgb, var(--line) 58%, transparent);
+}
+
+.article-comments-thread [data-waline] .article-comment-alert {
+  --comment-alert-accent: color-mix(in srgb, var(--line) 46%, transparent);
+  margin: 0.58rem 0;
+  padding: 0.5rem 0.66rem 0.52rem 0.72rem;
+  border: 1px solid
+    color-mix(in srgb, var(--comment-alert-accent) 32%, transparent);
+  border-inline-start-width: 0.2rem;
+  border-inline-start-color: var(--comment-alert-accent);
+  border-radius: 0.42rem;
+  background: color-mix(
+    in srgb,
+    var(--comment-paper) 90%,
+    var(--comment-alert-accent) 8%
+  );
+  color: color-mix(in srgb, var(--line) 68%, transparent);
+}
+
+.article-comments-thread [data-waline] .article-comment-alert--note {
+  --comment-alert-accent: #1f6feb;
+}
+
+.article-comments-thread [data-waline] .article-comment-alert--tip {
+  --comment-alert-accent: #2da44e;
+}
+
+.article-comments-thread [data-waline] .article-comment-alert--important {
+  --comment-alert-accent: #8250df;
+}
+
+.article-comments-thread [data-waline] .article-comment-alert--warning {
+  --comment-alert-accent: #bf8700;
+}
+
+.article-comments-thread [data-waline] .article-comment-alert--caution {
+  --comment-alert-accent: #cf222e;
+}
+
+.article-comments-thread [data-waline] .article-comment-alert-label {
+  margin-bottom: 0.22rem;
+  color: var(--comment-alert-accent);
+  font-weight: 700;
+  line-height: 1.28;
+}
+
+.article-comments-thread [data-waline] .article-comment-alert > :last-child {
+  margin-bottom: 0;
 }
 
 .article-comments-thread .article-comment-tikz {

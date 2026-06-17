@@ -27,10 +27,13 @@ const TIKZJAX_FONT_STYLESHEET_ID = "home-shell-tikzjax-fonts";
 const TIKZJAX_SCRIPT_ID = "home-shell-tikzjax-script";
 const TIKZ_BLOCK_PATTERN =
   /\\begin\s*\{tikzpicture\}[\s\S]*?\\end\s*\{tikzpicture\}/g;
+const GITHUB_ALERT_PATTERN =
+  /^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i;
 const MAX_TIKZ_BLOCKS_PER_RENDER = 4;
 const MAX_TIKZ_BLOCK_LENGTH = 8000;
 
 type TikzJaxProcessor = () => void | Promise<void>;
+type GitHubAlertKind = "note" | "tip" | "important" | "warning" | "caution";
 
 function loadWalineClientModule() {
   walineClientModule ??= import("@waline/client");
@@ -293,7 +296,69 @@ function replaceTikzTextBlocks(root: HTMLElement) {
   return renderedCount;
 }
 
-function renderWalineTikzContent(root: ParentNode) {
+function formatGitHubAlertLabel(alertKind: GitHubAlertKind) {
+  return alertKind.charAt(0).toUpperCase() + alertKind.slice(1);
+}
+
+function getFirstTextNode(root: Node) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+
+  return walker.nextNode() ? (walker.currentNode as Text) : null;
+}
+
+function removeLeadingBreaks(element: HTMLElement) {
+  while (element.firstChild instanceof HTMLBRElement) {
+    element.firstChild.remove();
+  }
+}
+
+function applyGitHubAlertBlockquotes(root: HTMLElement) {
+  const blockquotes = Array.from(root.querySelectorAll("blockquote"));
+
+  blockquotes.forEach((blockquote) => {
+    if (
+      !(blockquote instanceof HTMLElement) ||
+      blockquote.classList.contains("article-comment-alert")
+    ) {
+      return;
+    }
+
+    const firstTextNode = getFirstTextNode(blockquote);
+    const firstTextValue = firstTextNode?.nodeValue ?? "";
+    const match = firstTextValue.match(GITHUB_ALERT_PATTERN);
+    if (!firstTextNode || !match) return;
+
+    const alertKind = match[1].toLowerCase() as GitHubAlertKind;
+    firstTextNode.nodeValue = firstTextValue.replace(GITHUB_ALERT_PATTERN, "");
+
+    const firstParagraph = firstTextNode.parentElement;
+    if (firstParagraph instanceof HTMLParagraphElement) {
+      if (!firstTextNode.nodeValue) {
+        firstTextNode.remove();
+      }
+      removeLeadingBreaks(firstParagraph);
+
+      if (
+        !firstParagraph.textContent?.trim() &&
+        firstParagraph.children.length === 0
+      ) {
+        firstParagraph.remove();
+      }
+    }
+
+    const label = document.createElement("div");
+    label.className = "article-comment-alert-label";
+    label.textContent = formatGitHubAlertLabel(alertKind);
+
+    blockquote.classList.add(
+      "article-comment-alert",
+      `article-comment-alert--${alertKind}`,
+    );
+    blockquote.prepend(label);
+  });
+}
+
+function renderWalineEnhancedContent(root: ParentNode) {
   const contentBlocks = Array.from(
     root.querySelectorAll(".article-comments-thread .wl-content"),
   );
@@ -302,6 +367,7 @@ function renderWalineTikzContent(root: ParentNode) {
   contentBlocks.forEach((contentBlock) => {
     if (!(contentBlock instanceof HTMLElement)) return;
 
+    applyGitHubAlertBlockquotes(contentBlock);
     renderedCount += replaceTikzCodeBlocks(contentBlock);
     renderedCount += replaceTikzTextBlocks(contentBlock);
   });
@@ -311,12 +377,12 @@ function renderWalineTikzContent(root: ParentNode) {
   }
 }
 
-function initWalineTikzRendering(walineThread: HTMLElement) {
+function initWalineContentEnhancements(walineThread: HTMLElement) {
   let renderQueued = false;
 
   const render = () => {
     renderQueued = false;
-    renderWalineTikzContent(walineThread);
+    renderWalineEnhancedContent(walineThread);
   };
 
   render();
@@ -456,7 +522,7 @@ async function hydrateWalineComments(runId: number) {
   if (browserWindow.__homeShellWalineCommentsRunId !== runId) return;
 
   const instances: WalineInstance[] = [];
-  const tikzCleanups: Array<() => void> = [];
+  const contentEnhancementCleanups: Array<() => void> = [];
 
   walineRoots.forEach((walineRoot) => {
     const walineThread = walineRoot.querySelector("[data-waline-thread]");
@@ -485,12 +551,14 @@ async function hydrateWalineComments(runId: number) {
 
     if (instance) {
       instances.push(instance);
-      tikzCleanups.push(initWalineTikzRendering(walineThread));
+      contentEnhancementCleanups.push(
+        initWalineContentEnhancements(walineThread),
+      );
     }
   });
 
   browserWindow.__homeShellWalineCommentsCleanup = () => {
-    tikzCleanups.forEach((cleanup) => {
+    contentEnhancementCleanups.forEach((cleanup) => {
       cleanup();
     });
     instances.forEach((instance) => {
