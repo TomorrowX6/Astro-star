@@ -18,7 +18,7 @@ If you are new to Astro, start with the [Astro documentation](https://docs.astro
 
 - Update `src/config/site.ts` with your name, domain, profile links, and site description.
 - Replace the files in `src/content/blog`, `src/content/note`, and `src/content/project`.
-- Put article images or friend avatars in `public/figures` when you need local assets.
+- Create `public/figures` when you need local content images or friend avatars.
 
 ## MDX example
 
@@ -40,7 +40,7 @@ If you prefer fewer sections, you can keep only blogs and notes. If you write a 
 
 ### Site configuration
 
-The site configuration controls names, links, navigation, comments, article actions, and visual defaults. Start by editing `src/config/site.ts`, then update `src/config/about.ts` and the content files. This keeps personal data separate from reusable layout code.
+The site configuration controls names, links, navigation, comments, article actions, and visual defaults. Start by editing `src/config/site.ts`, then update `src/content/page/about.mdx`, `src/content/page/links.mdx`, and the content files. This keeps personal data separate from reusable layout code.
 
 When you maintain a private branch for your own site and keep `main` as a template, this split matters. Template updates can stay mostly generic, while personal content and deployment details remain isolated in your own branch.
 
