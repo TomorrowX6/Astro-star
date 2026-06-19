@@ -15,7 +15,9 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const { site } = await import("../src/config/site.ts");
 const { linkApplyOwner, friendLinks, lostLinks } =
   await import("../src/config/links.ts");
-const { socialLinks } = await import("../src/config/social.ts");
+const { socialLinks, socialDisplay } = await import("../src/config/social.ts");
+const { algoliaSiteSearchConfig, algoliaCrawlerVerification } =
+  await import("../src/config/search.ts");
 
 const defaultArticleActions = {
   license: {
@@ -132,6 +134,11 @@ const config = {
   },
   social: {
     socialLinks,
+    socialDisplay,
+  },
+  search: {
+    algoliaSiteSearchConfig,
+    algoliaCrawlerVerification,
   },
   rss: { language: rssLanguage },
 };
