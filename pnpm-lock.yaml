@@ -82,10 +82,10 @@ importers:
         specifier: ^7.2.0
         version: 7.2.0
       prettier:
-        specifier: latest
+        specifier: 3.8.4
         version: 3.8.4
       prettier-plugin-astro:
-        specifier: latest
+        specifier: 0.14.1
         version: 0.14.1
       tar:
         specifier: ^7.5.16
