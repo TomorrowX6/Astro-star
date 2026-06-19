@@ -10,7 +10,7 @@ export const site = {
   },
   site: {
     name: "Astro-star",
-    url: "https://hanlife02.com",
+    url: "https://example.com",
     description:
       "A personal site template for blogs, notes, projects, comments, and friend links.",
     iconSrc: "/site-icon.svg",
