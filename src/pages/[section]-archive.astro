@@ -43,7 +43,6 @@ interface SectionCategoryEntry {
 
 const sectionLabels = {
   blog: "Blog",
-  note: "Note",
 } as const;
 
 type SectionKey = keyof typeof sectionLabels;
@@ -105,7 +104,7 @@ function getEntryArticle(section: SectionKey, entry: ContentEntryMeta) {
 }
 
 export function getStaticPaths() {
-  return ["blog", "note"].map((section) => ({
+  return ["blog"].map((section) => ({
     params: { section },
   }));
 }
@@ -120,9 +119,9 @@ if (!section || !(section in sectionLabels)) {
 }
 
 const sectionKey = section as SectionKey;
-const collectionEntries = (await getCollection(
-  sectionKey,
-)).filter(isPublishedContentEntry) as ContentEntryMeta[];
+const collectionEntries = (await getCollection(sectionKey)).filter(
+  isPublishedContentEntry,
+) as ContentEntryMeta[];
 
 const categories = collectionEntries
   .reduce<SectionCategoryEntry[]>((entries, entry) => {

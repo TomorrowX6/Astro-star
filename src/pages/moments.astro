@@ -1,0 +1,215 @@
+---
+import { getCollection, render } from "astro:content";
+import ContentShell from "../components/layout/ContentShell.astro";
+import TocPanel from "../components/content/TocPanel.astro";
+import ArchiveActivityHeatmap from "../components/content/ArchiveActivityHeatmap.astro";
+import { site } from "../config/site";
+import "../style/pages/moments.css";
+
+export const prerender = true;
+
+const entries = (await getCollection("moment")).sort(
+  (a, b) =>
+    new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime(),
+);
+
+interface MomentView {
+  entry: (typeof entries)[number];
+  Content: any;
+  anchorId: string;
+  isoTime?: string;
+  year: string;
+  filePath: string;
+}
+
+const moments: MomentView[] = [];
+for (const entry of entries) {
+  const { Content } = await render(entry);
+  const parsed = new Date(entry.data.createdAt);
+  const valid = !Number.isNaN(parsed.getTime());
+  moments.push({
+    entry,
+    Content,
+    anchorId: `moment-${entry.id.replace(/[^a-zA-Z0-9_-]/g, "-")}`,
+    isoTime: valid ? parsed.toISOString() : undefined,
+    year: valid ? String(parsed.getFullYear()) : "Undated",
+    filePath: (entry.filePath || `src/content/moment/${entry.id}.md`).replace(
+      /\\/g,
+      "/",
+    ),
+  });
+}
+
+const yearGroups = moments.reduce<Array<{ year: string; items: MomentView[] }>>(
+  (groups, moment) => {
+    const currentGroup = groups[groups.length - 1];
+    if (currentGroup?.year === moment.year) {
+      currentGroup.items.push(moment);
+      return groups;
+    }
+    groups.push({ year: moment.year, items: [moment] });
+    return groups;
+  },
+  [],
+);
+
+const activityEntries = moments
+  .filter((moment) => moment.isoTime)
+  .map((moment) => ({
+    date: moment.isoTime as string,
+    dateLabel: moment.entry.data.createdAt,
+    href: `#${moment.anchorId}`,
+    title: "Moment",
+  }));
+
+const title = `Moments - ${site.site.name}`;
+const description = "Fragments, sparks, and passing thoughts";
+---
+
+<ContentShell
+  variant="article"
+  background="content"
+  title={title}
+  description={description}
+  ogType="website"
+  contentClass="content-page content-page--article content-page--moments"
+  contentAriaLabel="Moments content"
+  tocAriaLabel="Moments timeline navigation"
+>
+  <div class="moments-page" data-moments-root>
+    <header class="content-page-header">
+      <h1 id="moments-title" class="content-page-title">Moments</h1>
+      <p class="content-page-description">{description}</p>
+    </header>
+
+    <section
+      class="moment-composer"
+      aria-label="Post a new moment"
+      data-moment-composer
+      hidden
+    >
+      <textarea
+        class="moment-composer__input"
+        data-moment-content
+        rows="4"
+        placeholder="What's on your mind?"></textarea>
+      <input
+        class="moment-composer__tags"
+        type="text"
+        data-moment-tags
+        placeholder="Tags, comma separated (optional)"
+      />
+      <div class="moment-composer__actions">
+        <button type="button" class="moment-button" data-moment-image-add>
+          Add images
+        </button>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          data-moment-image-input
+          hidden
+        />
+        <button
+          type="button"
+          class="moment-button moment-button--primary"
+          data-moment-publish
+        >
+          Post moment
+        </button>
+      </div>
+      <ul class="moment-composer__images" data-moment-image-list></ul>
+      <p class="moment-status" role="status" data-moment-status></p>
+    </section>
+
+    {
+      activityEntries.length > 0 && (
+        <ArchiveActivityHeatmap entries={activityEntries} label="Moments" />
+      )
+    }
+
+    {
+      yearGroups.length > 0 ? (
+        <div class="moment-year-groups">
+          {yearGroups.map((group) => (
+            <section
+              class="moment-year-group"
+              aria-label={`${group.year} moments`}
+            >
+              <h2
+                id={`year-${group.year}`}
+                class="archive-year-heading collection-archive-year"
+              >
+                {group.year}
+              </h2>
+              <ol class="moment-timeline" aria-label={`${group.year} timeline`}>
+                {group.items.map(
+                  ({ entry, Content, isoTime, filePath, anchorId }) => (
+                    <li class="moment-card" id={anchorId}>
+                      <img
+                        class="moment-card__avatar"
+                        src={site.profile.avatarSrc}
+                        alt=""
+                        width="44"
+                        height="44"
+                        loading="lazy"
+                      />
+                      <div class="moment-card__main">
+                        <div class="moment-card__head">
+                          <span class="moment-card__name">
+                            {site.profile.name}
+                          </span>
+                          <time class="moment-card__time" datetime={isoTime}>
+                            {entry.data.createdAt}
+                          </time>
+                          <button
+                            type="button"
+                            class="moment-card__delete"
+                            data-moment-delete
+                            data-moment-file={filePath}
+                            hidden
+                          >
+                            Delete
+                          </button>
+                        </div>
+                        <div class="moment-card__content">
+                          <Content />
+                        </div>
+                        {entry.data.tags && entry.data.tags.length > 0 && (
+                          <div class="moment-card__tags">
+                            {entry.data.tags.map((tag) => (
+                              <span class="moment-card__tag">#{tag}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </li>
+                  ),
+                )}
+              </ol>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <p class="moments-page__empty">No moments yet.</p>
+      )
+    }
+  </div>
+
+  <TocPanel
+    slot="toc"
+    emptyText="No moments yet."
+    showProgress={true}
+    items={yearGroups.map((group) => ({
+      href: `#year-${group.year}`,
+      label: group.year,
+      depth: 2 as const,
+    }))}
+  />
+</ContentShell>
+
+<script>
+  import { initMomentsPage } from "../scripts/moments-page";
+
+  document.addEventListener("astro:page-load", () => initMomentsPage());
+</script>

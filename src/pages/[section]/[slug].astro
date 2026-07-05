@@ -16,13 +16,13 @@ import { isPublishedContentEntry } from "../../utils/content-visibility";
 import { getGitTimestamps } from "../../utils/git-timestamps";
 import { getWalineServerURL } from "../../utils/waline-server-url";
 
-const validSections = ["blog", "note", "project"] as const;
+const validSections = ["blog", "project"] as const;
 type SectionKey = (typeof validSections)[number];
 
 export const prerender = true;
 
 export async function getStaticPaths() {
-  const sections = ["blog", "note", "project"] as const;
+  const sections = ["blog", "project"] as const;
   const sectionEntries = await Promise.all(
     sections.map(async (section) => {
       const entries = (await getCollection(section)).filter(

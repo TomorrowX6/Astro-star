@@ -28,14 +28,19 @@ const pageSchema = z.object({
   tocTitle: z.string().optional(),
 });
 
+const momentSchema = z.object({
+  createdAt: z.string(),
+  tags: z.array(z.string()).optional(),
+});
+
 const blog = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/blog" }),
   schema: baseContentSchema,
 });
 
-const note = defineCollection({
-  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/note" }),
-  schema: baseContentSchema,
+const moment = defineCollection({
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/moment" }),
+  schema: momentSchema,
 });
 
 const project = defineCollection({
@@ -50,7 +55,7 @@ const page = defineCollection({
 
 export const collections = {
   blog,
-  note,
+  moment,
   project,
   page,
 };

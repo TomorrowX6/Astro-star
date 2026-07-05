@@ -55,12 +55,10 @@ interface ArchiveArticleItem {
 
 const sectionLabels = {
   blog: "Blog",
-  note: "Note",
   project: "Project",
 } as const;
 const sectionDescriptions = {
   blog: "Browse blog posts by date.",
-  note: "Browse notes by date.",
   project: "Explore projects and tools.",
 } as const;
 
@@ -161,7 +159,7 @@ function getEntryArchiveArticle(section: SectionKey, entry: ContentEntryMeta) {
 }
 
 export function getStaticPaths() {
-  return ["blog", "note", "project"].map((section) => ({
+  return ["blog", "project"].map((section) => ({
     params: { section },
   }));
 }
@@ -176,9 +174,9 @@ if (!section || !(section in sectionLabels)) {
 }
 
 const sectionKey = section as SectionKey;
-const collectionEntries = (await getCollection(
-  sectionKey,
-)).filter(isPublishedContentEntry) as ContentEntryMeta[];
+const collectionEntries = (await getCollection(sectionKey)).filter(
+  isPublishedContentEntry,
+) as ContentEntryMeta[];
 
 const categories = collectionEntries
   .reduce<SectionCategoryEntry[]>((entries, entry) => {
@@ -231,14 +229,9 @@ const yearGroups = archiveArticles.reduce<
   return groups;
 }, []);
 
-const usesArchivePage = sectionKey === "blog" || sectionKey === "note";
+const usesArchivePage = sectionKey === "blog";
 const basePageLabel = sectionLabels[sectionKey];
-const pageLabel =
-  sectionKey === "blog"
-    ? "All Blogs"
-    : sectionKey === "note"
-      ? "All Notes"
-      : basePageLabel;
+const pageLabel = sectionKey === "blog" ? "All Blogs" : basePageLabel;
 const activityEntries = usesArchivePage
   ? archiveArticles.map((article) => ({
       date: toContentIsoString(article.createdAt),

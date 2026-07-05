@@ -38,18 +38,11 @@ const PAGE_NAME_BY_ROUTE_ROOT = {
   about: "About",
   blog: "Blog",
   "blog-archive": "Blog",
-  note: "Note",
-  "note-archive": "Note",
+  moments: "Moments",
   project: "Project",
   links: "Links",
 } as const;
-const documentLang = [
-  "blog",
-  "note",
-  "project",
-  "blog-archive",
-  "note-archive",
-].includes(routeRoot)
+const documentLang = ["blog", "project", "blog-archive"].includes(routeRoot)
   ? "zh-CN"
   : "en";
 const pageName =

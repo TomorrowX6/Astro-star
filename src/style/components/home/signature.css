@@ -15,7 +15,7 @@
 }
 
 .signature-mark[data-signature-src="true"] {
-  aspect-ratio: 394.6 / 80.8;
+  aspect-ratio: 394.2 / 97.4;
   background-color: currentColor;
   mask-image: var(--signature-mask);
   mask-position: center;

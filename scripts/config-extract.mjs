@@ -163,7 +163,7 @@ const packPaths = [
   "src/content/blog",
   "src/content/note",
   "src/content/project",
-  "public/avatar.svg",
+  "public/avatar.png",
   "public/site-icon.svg",
   "public/figures",
   "public/reward",

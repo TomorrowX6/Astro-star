@@ -1,0 +1,270 @@
+/* /write 在线写作页面样式（移动优先，桌面端通过 min-width 断点扩展）。
+   页面位于 ContentShell 的 .content-page-body 内，
+   所有选择器以 .write-page 提权，避免被 content-prose 通用规则覆盖。 */
+
+/* 与 about/links 页一致的大号描边标题（覆盖 article 变体的实心标题重置） */
+.content-page--write .content-page-body h1 {
+  font-size: clamp(2rem, 1.8rem + 1vw, 3.5rem);
+  font-weight: 500;
+  line-height: 1.1;
+  color: transparent;
+  -webkit-text-stroke: 1.15px var(--line);
+  text-stroke: 1.15px var(--line);
+}
+
+.write-page {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--type-sm);
+}
+
+.write-page .write-button--logout {
+  align-self: flex-start;
+  margin-bottom: 1rem;
+}
+
+.write-page .write-page__hint {
+  margin: 0 0 0.75rem;
+  color: var(--text-muted);
+  font-size: var(--type-sm);
+  line-height: 1.6;
+  text-indent: 0;
+}
+
+.write-page .write-panel {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.write-page .write-panel .write-panel__title {
+  margin: 0 0 0.5rem;
+  font-size: var(--type-md);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* ---------- 标签页 ---------- */
+
+.write-page .write-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-soft);
+  padding-bottom: 0.5rem;
+}
+
+.write-page .write-tab {
+  appearance: none;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius-md) / 2);
+  padding: 0.35rem 0.8rem;
+  color: var(--text-muted);
+  font-size: var(--type-sm);
+  cursor: pointer;
+}
+
+.write-page .write-tab.is-active {
+  color: var(--line);
+  border-color: var(--border-soft);
+  font-weight: 600;
+}
+
+/* ---------- 表单 ---------- */
+
+.write-page .write-form__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.write-page .write-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.write-page .write-field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.write-page .write-field__label {
+  color: var(--text-muted);
+  font-size: var(--type-xs);
+}
+
+.write-page .write-input,
+.write-page .write-textarea {
+  appearance: none;
+  width: 100%;
+  border: 1px solid var(--border-soft);
+  border-radius: calc(var(--radius-md) / 2);
+  background: transparent;
+  color: var(--line);
+  font: inherit;
+  font-size: var(--type-sm);
+  padding: 0.5rem 0.65rem;
+}
+
+.write-page .write-input:focus-visible,
+.write-page .write-textarea:focus-visible {
+  outline: 2px solid var(--line-soft);
+  outline-offset: 1px;
+}
+
+.write-page .write-textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.write-page .write-textarea--pem,
+.write-page .write-textarea--body {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--type-xs);
+}
+
+/* Moment 面板的纵向字段间距（不在 grid 内） */
+.write-page [data-write-panel="moment"] .write-field {
+  margin-bottom: 0.75rem;
+}
+
+/* ---------- 按钮与操作行 ---------- */
+
+.write-page .write-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.write-page .write-button {
+  appearance: none;
+  border: 1px solid var(--border-soft);
+  border-radius: calc(var(--radius-md) / 2);
+  background: transparent;
+  color: var(--line);
+  font: inherit;
+  font-size: var(--type-sm);
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+
+.write-page .write-button:hover:not(:disabled) {
+  border-color: var(--line-soft);
+}
+
+.write-page .write-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.write-page .write-button--primary {
+  background: var(--line);
+  color: #ffffff;
+  border-color: var(--line);
+  font-weight: 600;
+}
+
+:root[data-theme="dark"] .write-page .write-button--primary {
+  color: #000000;
+}
+
+/* ---------- 图片与文章列表 ---------- */
+
+.write-page .write-image-list,
+.write-page .write-article-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.write-page .write-image-item,
+.write-page .write-article-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border-soft);
+  border-radius: calc(var(--radius-md) / 2);
+  padding: 0.5rem 0.65rem;
+  margin: 0;
+}
+
+.write-page .write-image-item__name,
+.write-page .write-article-item__name {
+  flex: 1 1 100%;
+  word-break: break-all;
+  color: var(--text-muted);
+  font-size: var(--type-xs);
+}
+
+.write-page .write-image-item button,
+.write-page .write-article-item button {
+  appearance: none;
+  border: 1px solid var(--border-soft);
+  border-radius: calc(var(--radius-md) / 3);
+  background: transparent;
+  color: var(--line);
+  font-size: var(--type-xs);
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+}
+
+/* ---------- 状态行 ---------- */
+
+.write-page .write-status {
+  min-height: 1.5em;
+  margin: 0.5rem 0 0;
+  font-size: var(--type-sm);
+  color: var(--text-muted);
+  text-indent: 0;
+}
+
+.write-page .write-status[data-kind="ok"] {
+  color: var(--line);
+  font-weight: 600;
+}
+
+.write-page .write-status[data-kind="error"] {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+:root[data-theme="dark"] .write-page .write-status[data-kind="error"] {
+  color: #ff8a7a;
+}
+
+/* ---------- 桌面端扩展 ---------- */
+
+@media (min-width: 768px) {
+  .write-page .write-panel {
+    padding: 1.5rem;
+  }
+
+  .write-page .write-form__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .write-page .write-field--full {
+    grid-column: 1 / -1;
+  }
+
+  .write-page .write-image-item__name,
+  .write-page .write-article-item__name {
+    flex: 1 1 auto;
+  }
+}
+
+@media (min-width: 1200px) {
+  .write-page .write-form__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

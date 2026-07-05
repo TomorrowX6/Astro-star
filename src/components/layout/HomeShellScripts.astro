@@ -37,8 +37,10 @@
     cleanupHomeShellContentImageLightbox,
     initHomeShellContentImageLightbox,
   } from "../../scripts/home-shell-content-image-lightbox";
+  import { initHomeShellWriteEntrance } from "../../scripts/home-shell-write-entrance";
 
   const HOME_SHELL_BEFORE_SWAP_CLEANUP_KEYS = [
+    "__homeShellWriteEntranceCleanup",
     "__homeShellGitHubRepoCardsCleanup",
     "__homeShellSignatureCleanup",
     "__homeShellContentTocCleanup",
@@ -147,6 +149,7 @@
       "content-image-lightbox",
       initHomeShellContentImageLightbox,
     );
+    runHomeShellInitializer("write-entrance", initHomeShellWriteEntrance);
   };
 
   if (!browserWindow.__homeShellPageLoadBound) {

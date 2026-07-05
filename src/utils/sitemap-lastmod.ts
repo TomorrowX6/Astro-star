@@ -15,8 +15,8 @@ type GitTimestampManifest = Record<
   { createdAt: string | null; updatedAt: string | null }
 >;
 
-const CONTENT_COLLECTIONS = ["blog", "note", "project"] as const;
-const ARCHIVE_COLLECTIONS = ["blog", "note"] as const;
+const CONTENT_COLLECTIONS = ["blog", "project"] as const;
+const ARCHIVE_COLLECTIONS = ["blog"] as const;
 const PROJECT_ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const CONTENT_ROOT = join(PROJECT_ROOT, "src", "content");
 const GIT_TIMESTAMPS_PATH = join(
@@ -28,7 +28,7 @@ const GIT_TIMESTAMPS_PATH = join(
 
 interface ContentRouteEntry {
   archiveSlug?: string;
-  collection: "blog" | "note" | "page" | "project";
+  collection: "blog" | "page" | "project";
   date: Date;
   id: string;
   path: string;
@@ -148,7 +148,7 @@ function getContentPath(path: string) {
   return relative(PROJECT_ROOT, path).split(sep).join("/");
 }
 
-function getArchiveSlug(collection: "blog" | "note", entry: ContentRouteEntry) {
+function getArchiveSlug(collection: "blog", entry: ContentRouteEntry) {
   const directoryArchiveSlug = normalizeArchiveSlug(
     entry.id.split("/").slice(0, -1).at(-1),
   );
@@ -185,7 +185,7 @@ function getEntries() {
       .join("/");
     const [collection] = relativeContentPath.split("/");
 
-    if (!["blog", "note", "page", "project"].includes(collection)) return [];
+    if (!["blog", "page", "project"].includes(collection)) return [];
 
     const source = readFileSync(path, "utf8");
     const frontmatter = parseFrontmatter(source);

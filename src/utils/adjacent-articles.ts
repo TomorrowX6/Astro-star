@@ -5,7 +5,7 @@ import { resolveContentSlug } from "./content-slug";
 import { resolveContentTitle } from "./content-title";
 import { isPublishedContentEntry } from "./content-visibility";
 
-type SectionKey = "blog" | "note" | "project";
+type SectionKey = "blog" | "project";
 type SectionEntry = CollectionEntry<SectionKey>;
 
 export interface AdjacentArticle {

@@ -1,0 +1,291 @@
+/* /moments 瞬间页面样式（移动优先）。
+   页面位于 ContentShell 的 .content-page-body 内，
+   选择器以 .moments-page 提权，避免与 content-prose 通用规则互相覆盖。 */
+
+/* 与 about/links 页一致的大号描边标题（覆盖 article 变体的实心标题重置） */
+.content-page--moments .content-page-body h1 {
+  font-size: clamp(2rem, 1.8rem + 1vw, 3.5rem);
+  font-weight: 500;
+  line-height: 1.1;
+  color: transparent;
+  -webkit-text-stroke: 1.15px var(--line);
+  text-stroke: 1.15px var(--line);
+}
+
+.moments-page {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--type-sm);
+}
+
+.moments-page .moments-page__empty {
+  margin: 2rem 0;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ---------- 发布器 ---------- */
+
+.moments-page .moment-composer {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* display: flex 会压过 UA 的 [hidden] 规则，需显式恢复 */
+.moments-page .moment-composer[hidden] {
+  display: none;
+}
+
+.moments-page .moment-composer__input,
+.moments-page .moment-composer__tags {
+  appearance: none;
+  width: 100%;
+  border: 1px solid var(--border-soft);
+  border-radius: calc(var(--radius-md) / 2);
+  background: transparent;
+  color: var(--line);
+  font: inherit;
+  font-size: var(--type-sm);
+  padding: 0.5rem 0.65rem;
+}
+
+.moments-page .moment-composer__input {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.moments-page .moment-composer__input:focus-visible,
+.moments-page .moment-composer__tags:focus-visible {
+  outline: 2px solid var(--line-soft);
+  outline-offset: 1px;
+}
+
+.moments-page .moment-composer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.moments-page .moment-button {
+  appearance: none;
+  border: 1px solid var(--border-soft);
+  border-radius: calc(var(--radius-md) / 2);
+  background: transparent;
+  color: var(--line);
+  font: inherit;
+  font-size: var(--type-sm);
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+
+.moments-page .moment-button:hover:not(:disabled) {
+  border-color: var(--line-soft);
+}
+
+.moments-page .moment-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.moments-page .moment-button--primary {
+  background: var(--line);
+  color: #ffffff;
+  border-color: var(--line);
+  font-weight: 600;
+}
+
+:root[data-theme="dark"] .moments-page .moment-button--primary {
+  color: #000000;
+}
+
+.moments-page .moment-composer__images {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.moments-page .moment-composer__image-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 1px solid var(--border-soft);
+  border-radius: calc(var(--radius-md) / 2);
+  padding: 0.4rem 0.65rem;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-xs);
+  word-break: break-all;
+}
+
+.moments-page .moment-composer__image-item button {
+  appearance: none;
+  border: 1px solid var(--border-soft);
+  border-radius: calc(var(--radius-md) / 3);
+  background: transparent;
+  color: var(--line);
+  font-size: var(--type-xs);
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.moments-page .moment-status {
+  min-height: 1.5em;
+  margin: 0;
+  font-size: var(--type-sm);
+  color: var(--text-muted);
+  text-indent: 0;
+}
+
+.moments-page .moment-status[data-kind="ok"] {
+  color: var(--line);
+  font-weight: 600;
+}
+
+.moments-page .moment-status[data-kind="error"] {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+:root[data-theme="dark"] .moments-page .moment-status[data-kind="error"] {
+  color: #ff8a7a;
+}
+
+/* ---------- 时间线 ---------- */
+
+.moments-page .moment-year-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.moments-page .moment-year-group .moment-timeline {
+  margin-top: 0.75rem;
+}
+
+.moments-page .moment-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* 热力图/TOC 锚点跳转时留出顶部空隙 */
+.moments-page .moment-card {
+  scroll-margin-top: 1.5rem;
+}
+
+.moments-page .moment-card {
+  display: flex;
+  gap: 0.75rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin: 0;
+}
+
+.moments-page .moment-card__avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--border-soft);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.moments-page .moment-card__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.moments-page .moment-card__head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.moments-page .moment-card__name {
+  font-weight: 600;
+  color: var(--line);
+}
+
+.moments-page .moment-card__time {
+  color: var(--text-muted);
+  font-size: var(--type-xs);
+}
+
+.moments-page .moment-card__delete {
+  appearance: none;
+  margin-left: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: calc(var(--radius-md) / 3);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--type-xs);
+  padding: 0.2rem 0.55rem;
+  cursor: pointer;
+}
+
+.moments-page .moment-card__delete:hover {
+  color: var(--line);
+  border-color: var(--line-soft);
+}
+
+/* 瞬间正文：压缩 prose 的文章级间距，使卡片紧凑 */
+.moments-page .moment-card__content > :first-child {
+  margin-top: 0;
+}
+
+.moments-page .moment-card__content p {
+  margin: 0 0 0.5rem;
+  text-indent: 0;
+  line-height: 1.7;
+}
+
+.moments-page .moment-card__content > :last-child {
+  margin-bottom: 0;
+}
+
+.moments-page .moment-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.moments-page .moment-card__tag {
+  color: var(--text-muted);
+  font-size: var(--type-xs);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+}
+
+/* ---------- 桌面端扩展 ---------- */
+
+@media (min-width: 768px) {
+  .moments-page .moment-card {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .moments-page .moment-composer {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .moments-page .moment-composer__actions {
+    justify-content: flex-end;
+  }
+}

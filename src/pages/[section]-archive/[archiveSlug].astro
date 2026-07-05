@@ -39,7 +39,6 @@ interface ArchiveArticleItem {
 
 const sectionBaseLabels = {
   blog: "Blog",
-  note: "Note",
 } as const;
 
 type SectionKey = keyof typeof sectionBaseLabels;
@@ -65,7 +64,7 @@ function getArchiveSlugFromEntry(section: SectionKey, entry: ContentEntryMeta) {
 }
 
 export async function getStaticPaths() {
-  const sections = ["blog", "note"] as const;
+  const sections = ["blog"] as const;
   const getStaticArchiveSlugFromEntryId = (id: string) =>
     normalizeArchiveSlug(id.split("/").slice(0, -1).at(-1));
   const getStaticArchiveSlugFromEntry = (

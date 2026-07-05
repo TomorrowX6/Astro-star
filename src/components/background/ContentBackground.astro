@@ -1,11 +1,8 @@
 ---
 import "../../style/components/background/content-background.css";
 
-type ContentBackgroundBaseSection = "blog" | "note" | "project";
-type ContentBackgroundSection =
-  | ContentBackgroundBaseSection
-  | "blog-archive"
-  | "note-archive";
+type ContentBackgroundBaseSection = "blog" | "project";
+type ContentBackgroundSection = ContentBackgroundBaseSection | "blog-archive";
 
 interface Props {
   section?: ContentBackgroundSection;

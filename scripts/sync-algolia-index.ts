@@ -19,7 +19,7 @@ import { isPublishedFrontmatter } from "../src/utils/content-visibility.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CONTENT_DIR = join(ROOT, "src", "content");
-const VALID_SECTIONS = ["blog", "note", "project"] as const;
+const VALID_SECTIONS = ["blog", "project"] as const;
 const ALGOLIA_RECORD_SIZE_LIMIT_BYTES = 10000;
 const MAX_ALGOLIA_RECORD_BYTES = 9500;
 const MAX_RECORD_CONTENT_BYTES = 5200;

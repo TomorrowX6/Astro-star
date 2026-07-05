@@ -36,7 +36,7 @@ const defaultLinkApplyOwner = {
   name: "Your Name",
   description: "A short line about your site.",
   href: "https://example.com",
-  avatarSrc: "/avatar.svg",
+  avatarSrc: "/avatar.png",
 };
 
 const defaultSocialLinks = [

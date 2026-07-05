@@ -22,9 +22,6 @@ const { profile } = site;
 const latestBlogEntries = (await getCollection("blog")).filter(
   isPublishedContentEntry,
 );
-const latestNoteEntries = (await getCollection("note")).filter(
-  isPublishedContentEntry,
-);
 
 interface LatestArticleItem {
   title: string;
@@ -43,10 +40,8 @@ interface LatestTimelineGroup {
 }
 
 function buildLatestArticles(
-  entries:
-    | Awaited<typeof latestBlogEntries>
-    | Awaited<typeof latestNoteEntries>,
-  section: "blog" | "note",
+  entries: Awaited<typeof latestBlogEntries>,
+  section: "blog",
 ) {
   const articles: LatestArticleItem[] = [];
 
@@ -102,12 +97,7 @@ const latestBlogArticles = buildLatestArticles(latestBlogEntries, "blog").slice(
   0,
   4,
 );
-const latestNoteArticles = buildLatestArticles(latestNoteEntries, "note").slice(
-  0,
-  4,
-);
 const latestBlogTimelineGroups = buildLatestTimelineGroups(latestBlogArticles);
-const latestNoteTimelineGroups = buildLatestTimelineGroups(latestNoteArticles);
 const profileLinks = getSocialLinks(socialDisplay.home).slice(0, 4);
 ---
 
@@ -116,5 +106,4 @@ const profileLinks = getSocialLinks(socialDisplay.home).slice(0, 4);
   ownerName={profile.name}
   profileLinks={profileLinks}
   latestBlogTimelineGroups={latestBlogTimelineGroups}
-  latestNoteTimelineGroups={latestNoteTimelineGroups}
 />

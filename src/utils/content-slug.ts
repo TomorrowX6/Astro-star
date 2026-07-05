@@ -38,7 +38,7 @@ export function slugifyCategoryLabel(value: string) {
 export function getArchiveSlugFromPath(path: string, section?: string) {
   const sectionPattern = section
     ? section.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    : "(?:blog|note|project)";
+    : "(?:blog|project)";
   const match = path.match(
     new RegExp(`content/${sectionPattern}/([^/]+)/[^/]+\\.(md|mdx)$`, "i"),
   );

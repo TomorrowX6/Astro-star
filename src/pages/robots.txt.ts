@@ -4,6 +4,7 @@ import { algoliaCrawlerVerification } from "../config/search";
 const getRobotsTxt = (sitemapURL: URL) =>
   `${algoliaCrawlerVerification ? `# Algolia-Crawler-Verif: ${algoliaCrawlerVerification}\n` : ""}User-agent: *
 Allow: /
+Disallow: /write
 
 Sitemap: ${sitemapURL.href}
 `;

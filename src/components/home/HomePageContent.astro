@@ -38,16 +38,10 @@ interface Props {
   ownerName: string;
   profileLinks: SocialLinkItem[];
   latestBlogTimelineGroups: LatestTimelineGroup[];
-  latestNoteTimelineGroups: LatestTimelineGroup[];
 }
 
-const {
-  profile,
-  ownerName,
-  profileLinks,
-  latestBlogTimelineGroups,
-  latestNoteTimelineGroups,
-} = Astro.props as Props;
+const { profile, ownerName, profileLinks, latestBlogTimelineGroups } =
+  Astro.props as Props;
 const homeDescription = profile.intro.trim() || profile.bio.trim();
 
 function isExternalLink(href: string) {
@@ -139,14 +133,6 @@ function isExternalLink(href: string) {
           archiveLabel: "View all blogs",
           archiveHint: "View all blogs",
           groups: latestBlogTimelineGroups,
-        },
-        {
-          key: "notes",
-          title: "Latest Notes",
-          archiveHref: "/note/",
-          archiveLabel: "View all notes",
-          archiveHint: "View all notes",
-          groups: latestNoteTimelineGroups,
         },
       ].map((block) => (
         <section

@@ -73,6 +73,30 @@
   border-color: var(--line);
 }
 
+/* 头像三连击进入 /write 的触发动画（时长与脚本 SPIN_DURATION_MS 对应） */
+.profile-avatar-wrap.is-write-entrance .profile-avatar {
+  animation: profile-avatar-write-entrance 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+  border-color: var(--line);
+}
+
+@keyframes profile-avatar-write-entrance {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.12);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-avatar-wrap.is-write-entrance .profile-avatar {
+    animation: none;
+  }
+}
+
 .profile-codetime-popover {
   position: absolute;
   top: calc(100% + clamp(0.55rem, 1vw, 0.85rem));
