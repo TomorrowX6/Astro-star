@@ -24,7 +24,12 @@ interface MomentView {
   isoTime?: string;
   year: string;
   filePath: string;
+  /** 超出首屏批次的卡片先隐藏，滚动到底部时分批展开（见 moments-page.ts） */
+  lazy: boolean;
 }
+
+// 与 moments-page.ts 的 LAZY_BATCH_SIZE 一致
+const LAZY_INITIAL_COUNT = 10;
 
 // 正文里的平台链接（Bangumi/bilibili/GitHub/Steam/网易云/豆瓣/IMDb/YouTube）
 // 在构建时抽出并替换为链接卡片，剩余 Markdown 用 Astro 官方处理器渲染
@@ -47,8 +52,11 @@ for (const entry of entries) {
       /\\/g,
       "/",
     ),
+    lazy: moments.length >= LAZY_INITIAL_COUNT,
   });
 }
+
+const hasLazyMoments = moments.some((moment) => moment.lazy);
 
 const yearGroups = moments.reduce<Array<{ year: string; items: MomentView[] }>>(
   (groups, moment) => {
@@ -107,6 +115,9 @@ const description = "Fragments, sparks, and passing thoughts";
             <section
               class="moment-year-group"
               aria-label={`${group.year} moments`}
+              data-moment-lazy={
+                group.items.every((item) => item.lazy) ? "" : undefined
+              }
             >
               <h2
                 id={`year-${group.year}`}
@@ -116,8 +127,12 @@ const description = "Fragments, sparks, and passing thoughts";
               </h2>
               <ol class="moment-timeline" aria-label={`${group.year} timeline`}>
                 {group.items.map(
-                  ({ entry, html, cards, isoTime, filePath, anchorId }) => (
-                    <li class="moment-card" id={anchorId}>
+                  ({ entry, html, cards, isoTime, filePath, anchorId, lazy }) => (
+                    <li
+                      class="moment-card"
+                      id={anchorId}
+                      data-moment-lazy={lazy ? "" : undefined}
+                    >
                       <img
                         class="moment-card__avatar"
                         src={site.profile.avatarSrc}
@@ -169,6 +184,16 @@ const description = "Fragments, sparks, and passing thoughts";
         </div>
       ) : (
         <p class="moments-page__empty">No moments yet.</p>
+      )
+    }
+
+    {
+      hasLazyMoments && (
+        <div
+          class="moment-lazy-sentinel"
+          data-moment-sentinel
+          aria-hidden="true"
+        />
       )
     }
   </div>

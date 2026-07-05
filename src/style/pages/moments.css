@@ -47,6 +47,20 @@
   color: #ff8a7a;
 }
 
+/* ---------- 时间线懒加载 ----------
+   仅在 JS 可用（html[data-js="true"]，BaseLayout 头部内联脚本 pre-paint 写入）时
+   隐藏超出首批的卡片；无 JS 时时间线完整展示。展开由 moments-page.ts 负责。 */
+
+html[data-js="true"] .moments-page .moment-card[data-moment-lazy],
+html[data-js="true"] .moments-page .moment-year-group[data-moment-lazy] {
+  display: none;
+}
+
+/* IntersectionObserver 哨兵：不占视觉空间，只需要可被观察 */
+.moments-page .moment-lazy-sentinel {
+  min-height: 1px;
+}
+
 /* ---------- 时间线 ---------- */
 
 .moments-page .moment-year-groups {
