@@ -1,19 +1,14 @@
 /**
- * /moments 页面控制器：在线发布器与删除按钮。
+ * /moments 页面控制器：删除按钮（发布在 /write 的 Moment 标签页完成）。
  *
  * 仅当浏览器会话中已有 /write 页保存的 GitHub App 私钥时，
- * 发布器与删除按钮才会显示；游客看到的是纯静态时间线。
+ * 删除按钮才会显示；游客看到的是纯静态时间线。
  */
 
 import { writeConfig } from "../config/write";
 import { clearCachedToken, hasAuth } from "./write-auth";
 import { GitHubApiError } from "./write-github-client";
-import {
-  deleteArticle,
-  type LocalImage,
-  type WritePublishConfig,
-} from "./write-publish";
-import { publishMoment } from "./write-moments";
+import { deleteArticle, type WritePublishConfig } from "./write-publish";
 
 type MomentsPageWindow = Window & {
   __momentsPageCleanup?: () => void;
@@ -40,29 +35,11 @@ export function initMomentsPage() {
   const { signal } = controller;
   browserWindow.__momentsPageCleanup = () => controller.abort();
 
-  const composer = root.querySelector<HTMLElement>("[data-moment-composer]");
-  const contentInput = root.querySelector<HTMLTextAreaElement>(
-    "[data-moment-content]",
-  );
-  const tagsInput = root.querySelector<HTMLInputElement>("[data-moment-tags]");
-  const publishButton = root.querySelector<HTMLButtonElement>(
-    "[data-moment-publish]",
-  );
-  const imageAddButton = root.querySelector<HTMLButtonElement>(
-    "[data-moment-image-add]",
-  );
-  const imageInput = root.querySelector<HTMLInputElement>(
-    "[data-moment-image-input]",
-  );
-  const imageList = root.querySelector<HTMLUListElement>(
-    "[data-moment-image-list]",
-  );
   const statusLine = root.querySelector<HTMLElement>("[data-moment-status]");
   const deleteButtons = Array.from(
     root.querySelectorAll<HTMLButtonElement>("[data-moment-delete]"),
   );
 
-  let images: LocalImage[] = [];
   let pendingDeletePath: string | null = null;
   let busy = false;
 
@@ -87,80 +64,6 @@ export function initMomentsPage() {
       "error",
     );
   };
-
-  const renderImages = () => {
-    if (!imageList) return;
-    imageList.textContent = "";
-    for (const image of images) {
-      const item = document.createElement("li");
-      item.className = "moment-composer__image-item";
-
-      const name = document.createElement("span");
-      name.textContent = image.file.name;
-
-      const removeButton = document.createElement("button");
-      removeButton.type = "button";
-      removeButton.textContent = "Remove";
-      removeButton.addEventListener(
-        "click",
-        () => {
-          images = images.filter((entry) => entry.id !== image.id);
-          renderImages();
-        },
-        { signal },
-      );
-
-      item.append(name, removeButton);
-      imageList.append(item);
-    }
-  };
-
-  imageAddButton?.addEventListener("click", () => imageInput?.click(), {
-    signal,
-  });
-
-  imageInput?.addEventListener(
-    "change",
-    () => {
-      for (const file of Array.from(imageInput.files || [])) {
-        images.push({ id: crypto.randomUUID(), file });
-      }
-      imageInput.value = "";
-      renderImages();
-    },
-    { signal },
-  );
-
-  publishButton?.addEventListener(
-    "click",
-    async () => {
-      if (busy) return;
-      busy = true;
-      publishButton.disabled = true;
-      try {
-        const tags = (tagsInput?.value || "")
-          .split(/[,，]/)
-          .map((tag) => tag.trim())
-          .filter(Boolean);
-        await publishMoment(
-          momentsConfig,
-          { content: contentInput?.value ?? "", tags, images },
-          (message) => setStatus(message),
-        );
-        if (contentInput) contentInput.value = "";
-        if (tagsInput) tagsInput.value = "";
-        images = [];
-        renderImages();
-        setStatus("Posted! It will appear after the site redeploys", "ok");
-      } catch (error) {
-        handleError(error);
-      } finally {
-        busy = false;
-        publishButton.disabled = false;
-      }
-    },
-    { signal },
-  );
 
   for (const button of deleteButtons) {
     button.addEventListener(
@@ -193,10 +96,9 @@ export function initMomentsPage() {
     );
   }
 
-  // 已登录（/write 会话中有私钥）才显示发布器与删除按钮
+  // 已登录（/write 会话中有私钥）才显示删除按钮
   void hasAuth(momentsConfig.encryptKey).then((authed) => {
     if (!authed) return;
-    composer?.removeAttribute("hidden");
     for (const button of deleteButtons) {
       button.removeAttribute("hidden");
     }

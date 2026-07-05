@@ -33,6 +33,8 @@ export type WritePublishConfig = WriteAuthConfig & {
 export type LocalImage = {
   id: string;
   file: File;
+  /** 编辑器内实时预览用的 object URL，发布时替换为仓库路径 */
+  previewUrl?: string;
 };
 
 export type ArticleForm = {
@@ -148,7 +150,9 @@ export async function publishArticle(params: PublishParams): Promise<void> {
   // 上传正文与封面引用到的本地图片；同名内容（同 hash）只上传一次
   const usedImages = images.filter(
     (img) =>
-      body.includes(localImagePlaceholder(img.id)) || form.cover === img.id,
+      body.includes(localImagePlaceholder(img.id)) ||
+      (img.previewUrl && body.includes(img.previewUrl)) ||
+      form.cover === img.id,
   );
   const uploadedHashes = new Set<string>();
   let index = 1;
@@ -180,6 +184,9 @@ export async function publishArticle(params: PublishParams): Promise<void> {
     body = body
       .split(`(${localImagePlaceholder(image.id)})`)
       .join(`(${publicPath})`);
+    if (image.previewUrl) {
+      body = body.split(image.previewUrl).join(publicPath);
+    }
     if (form.cover === image.id) {
       coverPath = publicPath;
     }

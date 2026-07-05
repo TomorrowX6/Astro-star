@@ -157,7 +157,6 @@ const siteJsonLdText = JSON.stringify(siteJsonLd).replace(/</g, "\\u003c");
     <script is:inline type="application/ld+json" set:html={siteJsonLdText} />
     <script is:inline>
       (function () {
-        var root = document.documentElement;
         var storageKey = "theme-preference";
         var resolvedCookieKey = "theme-resolved";
         var prefersDark = matchMedia("(prefers-color-scheme: dark)");
@@ -193,25 +192,33 @@ const siteJsonLdText = JSON.stringify(siteJsonLd).replace(/</g, "\\u003c");
         var isValidMode = function (value) {
           return value === "light" || value === "dark" || value === "system";
         };
-        var storedMode = readStorage();
-        var cookieMode = readCookie(storageKey);
-        var mode = isValidMode(storedMode)
-          ? storedMode
-          : isValidMode(cookieMode)
-            ? cookieMode
-            : isValidMode(root.dataset.themeMode)
-              ? root.dataset.themeMode
-              : "system";
-        var resolved =
-          mode === "system" ? (prefersDark.matches ? "dark" : "light") : mode;
-        root.dataset.themeMode = mode;
-        root.dataset.theme = resolved;
-        root.style.colorScheme = resolved;
-        root.style.backgroundColor =
-          resolved === "dark" ? "#000000" : "#ffffff";
-        writeStorage(mode);
-        writeCookie(storageKey, mode);
-        writeCookie(resolvedCookieKey, resolved);
+        var applyTheme = function () {
+          var root = document.documentElement;
+          var storedMode = readStorage();
+          var cookieMode = readCookie(storageKey);
+          var mode = isValidMode(storedMode)
+            ? storedMode
+            : isValidMode(cookieMode)
+              ? cookieMode
+              : isValidMode(root.dataset.themeMode)
+                ? root.dataset.themeMode
+                : "system";
+          var resolved =
+            mode === "system" ? (prefersDark.matches ? "dark" : "light") : mode;
+          root.dataset.js = "true";
+          root.dataset.themeMode = mode;
+          root.dataset.theme = resolved;
+          root.style.colorScheme = resolved;
+          root.style.backgroundColor =
+            resolved === "dark" ? "#000000" : "#ffffff";
+          writeStorage(mode);
+          writeCookie(storageKey, mode);
+          writeCookie(resolvedCookieKey, resolved);
+        };
+        applyTheme();
+        // ClientRouter 换页会用服务端 HTML 覆盖 html 属性（data-theme 回到 light）。
+        // astro:after-swap 在浏览器绘制前触发，在此重新应用主题避免闪白。
+        document.addEventListener("astro:after-swap", applyTheme);
       })();
     </script>
     <slot name="head" />

@@ -1,9 +1,14 @@
 /**
  * /write 页面控制器：认证门、文章表单、瞬间发布、图片附件、文章管理列表。
  *
- * 仅负责 DOM 交互与状态展示；GitHub 通信与内容组装
- * 全部委托给 write-auth / write-publish / write-moments 模块。
+ * 正文与瞬间使用 Toast UI Editor（所见即所得，输出仍为 Markdown）。
+ * Archive folder（当前年份）与 Created date（今天）自动生成，不再展示；
+ * 编辑已有文章时保留其原目录、日期、description 与 published 状态。
  */
+
+import Editor from "@toast-ui/editor";
+import "@toast-ui/editor/dist/toastui-editor.css";
+import "@toast-ui/editor/dist/theme/toastui-editor-dark.css";
 
 import { writeConfig } from "../config/write";
 import { slugifyCategoryLabel } from "../utils/content-slug";
@@ -46,15 +51,34 @@ const momentsConfig: WritePublishConfig = {
   imagesPublicBase: writeConfig.moments.imagesPublicBase,
 };
 
+function createEditor(
+  element: HTMLElement,
+  height: string,
+  onImageAdd: (file: File) => string,
+) {
+  return new Editor({
+    el: element,
+    height,
+    initialEditType: "wysiwyg",
+    previewStyle: "tab",
+    usageStatistics: false,
+    autofocus: false,
+    theme: document.documentElement.dataset.theme === "dark" ? "dark" : "light",
+    hooks: {
+      // 工具栏插图/粘贴/拖拽的图片都进入上传管线，编辑器内先用本地预览
+      addImageBlobHook: (blob, callback) => {
+        callback(onImageAdd(blob), blob.name);
+      },
+    },
+  });
+}
+
 export function initWritePage() {
   const root = document.querySelector<HTMLElement>("[data-write-root]");
   if (!root) return;
 
   const browserWindow = window as WritePageWindow;
   browserWindow.__writePageCleanup?.();
-  const controller = new AbortController();
-  const { signal } = controller;
-  browserWindow.__writePageCleanup = () => controller.abort();
 
   const query = <T extends HTMLElement>(selector: string) =>
     root.querySelector<T>(selector);
@@ -70,23 +94,15 @@ export function initWritePage() {
   const statusLine = query("[data-write-status]");
   const publishButton = query<HTMLButtonElement>("[data-write-publish]");
   const resetButton = query<HTMLButtonElement>("[data-write-reset]");
-  const imageInput = query<HTMLInputElement>("[data-write-image-input]");
-  const imageAddButton = query<HTMLButtonElement>("[data-write-image-add]");
   const imageList = query<HTMLUListElement>("[data-write-image-list]");
   const articleList = query<HTMLUListElement>("[data-write-article-list]");
   const refreshButton = query<HTMLButtonElement>("[data-write-refresh]");
-  const momentContentInput = query<HTMLTextAreaElement>(
-    "[data-write-moment-content]",
-  );
+  const bodyEditorHost = query("[data-write-body-editor]");
+  const momentEditorHost = query("[data-write-moment-editor]");
   const momentTagsInput = query<HTMLInputElement>("[data-write-moment-tags]");
+  const momentTagsBox = query<HTMLElement>("[data-write-moment-tags-box]");
   const momentPublishButton = query<HTMLButtonElement>(
     "[data-write-moment-publish]",
-  );
-  const momentImageAddButton = query<HTMLButtonElement>(
-    "[data-write-moment-image-add]",
-  );
-  const momentImageInput = query<HTMLInputElement>(
-    "[data-write-moment-image-input]",
   );
   const momentImageList = query<HTMLUListElement>(
     "[data-write-moment-image-list]",
@@ -102,21 +118,65 @@ export function initWritePage() {
     root.querySelector<T>(`[data-write-field="${name}"]`);
   const titleInput = field<HTMLInputElement>("title");
   const slugInput = field<HTMLInputElement>("slug");
-  const archiveDirInput = field<HTMLInputElement>("archiveDir");
-  const createdAtInput = field<HTMLInputElement>("createdAt");
   const typeInput = field<HTMLInputElement>("type");
   const formatSelect = field<HTMLSelectElement>("fileFormat");
-  const descriptionInput = field<HTMLTextAreaElement>("description");
   const coverInput = field<HTMLInputElement>("cover");
-  const publishedInput = field<HTMLInputElement>("published");
-  const bodyInput = field<HTMLTextAreaElement>("body");
 
-  if (!form || !bodyInput || !titleInput || !slugInput) return;
+  if (!form || !titleInput || !slugInput || !bodyEditorHost) return;
+
+  const controller = new AbortController();
+  const { signal } = controller;
+
+  // Toast UI 会把 height 写为宿主行内样式；拖拽 resize 时浏览器接管该行内高度
+  const bodyEditor = createEditor(bodyEditorHost, "26rem", (file) => {
+    const image: LocalImage = {
+      id: crypto.randomUUID(),
+      file,
+      previewUrl: URL.createObjectURL(file),
+    };
+    images.push(image);
+    renderImages();
+    return image.previewUrl as string;
+  });
+  const momentEditor = momentEditorHost
+    ? createEditor(momentEditorHost, "26rem", (file) => {
+        const image: LocalImage = {
+          id: crypto.randomUUID(),
+          file,
+          previewUrl: URL.createObjectURL(file),
+        };
+        momentImages.push(image);
+        renderMomentImages();
+        return image.previewUrl as string;
+      })
+    : null;
+
+  browserWindow.__writePageCleanup = () => {
+    controller.abort();
+    // 路由切换后旧编辑器的 DOM 已被丢弃，destroy 可能抛错；
+    // 必须吞掉，否则会中断下一次 initWritePage 的初始化
+    try {
+      bodyEditor.destroy();
+    } catch {
+      // ignore
+    }
+    try {
+      momentEditor?.destroy();
+    } catch {
+      // ignore
+    }
+  };
 
   let images: LocalImage[] = [];
   let momentImages: LocalImage[] = [];
+  let momentTags: string[] = [];
   let mode: "create" | "edit" = "create";
   let originalPath: string | undefined;
+  // 编辑模式下保留原文章的隐藏字段，更新时原样写回
+  let editArchiveDir = "";
+  let editCreatedAt = "";
+  let editDescription = "";
+  let editPublished = true;
   let pendingDeletePath: string | null = null;
   let busy = false;
 
@@ -166,16 +226,16 @@ export function initWritePage() {
   const resetForm = () => {
     mode = "create";
     originalPath = undefined;
+    editArchiveDir = "";
+    editCreatedAt = "";
+    editDescription = "";
+    editPublished = true;
     images = [];
     form.reset();
-    if (createdAtInput) createdAtInput.value = formatDateLocal();
-    if (archiveDirInput) {
-      archiveDirInput.value = writeConfig.content.defaultArchiveDir;
-    }
-    if (publishedInput) publishedInput.checked = true;
+    bodyEditor.setMarkdown("");
     renderImages();
     setPublishLabel();
-    setStatus("Reset to a new post");
+    setStatus("");
   };
 
   const buildForm = (): ArticleForm => {
@@ -185,28 +245,22 @@ export function initWritePage() {
     }
     return {
       slug: slugInput.value.trim(),
-      archiveDir: archiveDirInput?.value.trim() ?? "",
+      archiveDir:
+        mode === "edit"
+          ? editArchiveDir
+          : writeConfig.content.defaultArchiveDir,
       fileFormat: formatSelect?.value === "mdx" ? "mdx" : "md",
       title: titleInput.value.trim(),
-      description: descriptionInput?.value.trim() ?? "",
-      createdAt: createdAtInput?.value.trim() || formatDateLocal(),
+      description: editDescription,
+      createdAt: mode === "edit" ? editCreatedAt : formatDateLocal(),
       type: typeInput?.value.trim() || undefined,
-      published: publishedInput?.checked ?? true,
+      published: editPublished,
       cover,
-      body: bodyInput.value,
+      body: bodyEditor.getMarkdown(),
     };
   };
 
   // ---------- 图片附件 ----------
-
-  const insertAtCursor = (text: string) => {
-    const start = bodyInput.selectionStart ?? bodyInput.value.length;
-    const end = bodyInput.selectionEnd ?? start;
-    bodyInput.value =
-      bodyInput.value.slice(0, start) + text + bodyInput.value.slice(end);
-    bodyInput.focus();
-    bodyInput.selectionStart = bodyInput.selectionEnd = start + text.length;
-  };
 
   const renderImages = () => {
     if (!imageList) return;
@@ -219,15 +273,6 @@ export function initWritePage() {
       name.className = "write-image-item__name";
       name.textContent = image.file.name;
 
-      const insertButton = document.createElement("button");
-      insertButton.type = "button";
-      insertButton.textContent = "Insert";
-      insertButton.addEventListener(
-        "click",
-        () => insertAtCursor(`![](${localImagePlaceholder(image.id)})`),
-        { signal },
-      );
-
       const coverButton = document.createElement("button");
       coverButton.type = "button";
       coverButton.textContent = "Use as cover";
@@ -235,7 +280,6 @@ export function initWritePage() {
         "click",
         () => {
           if (coverInput) coverInput.value = localImagePlaceholder(image.id);
-          setStatus(`Cover set to ${image.file.name}`);
         },
         { signal },
       );
@@ -252,7 +296,7 @@ export function initWritePage() {
         { signal },
       );
 
-      item.append(name, insertButton, coverButton, removeButton);
+      item.append(name, coverButton, removeButton);
       imageList.append(item);
     }
   };
@@ -285,6 +329,72 @@ export function initWritePage() {
     }
   };
 
+  // ---------- 瞬间标签（回车生成胶囊，可多个） ----------
+
+  const renderMomentTags = () => {
+    if (!momentTagsBox || !momentTagsInput) return;
+    for (const chip of momentTagsBox.querySelectorAll(".write-tags__chip")) {
+      chip.remove();
+    }
+    for (const tag of momentTags) {
+      const chip = document.createElement("span");
+      chip.className = "write-tags__chip";
+      chip.textContent = tag;
+
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "write-tags__remove";
+      removeButton.setAttribute("aria-label", `Remove tag ${tag}`);
+      removeButton.textContent = "×";
+      removeButton.addEventListener(
+        "click",
+        () => {
+          momentTags = momentTags.filter((entry) => entry !== tag);
+          renderMomentTags();
+        },
+        { signal },
+      );
+
+      chip.append(removeButton);
+      momentTagsBox.insertBefore(chip, momentTagsInput);
+    }
+  };
+
+  const addMomentTag = (raw: string) => {
+    const tag = raw.trim();
+    if (!tag || momentTags.includes(tag)) return;
+    momentTags.push(tag);
+    renderMomentTags();
+  };
+
+  momentTagsInput?.addEventListener(
+    "keydown",
+    (event) => {
+      if (event.key === "Enter" || event.key === "," || event.key === "、") {
+        event.preventDefault();
+        addMomentTag(momentTagsInput.value);
+        momentTagsInput.value = "";
+        return;
+      }
+      if (event.key === "Backspace" && !momentTagsInput.value) {
+        momentTags.pop();
+        renderMomentTags();
+      }
+    },
+    { signal },
+  );
+
+  momentTagsInput?.addEventListener(
+    "blur",
+    () => {
+      if (momentTagsInput.value.trim()) {
+        addMomentTag(momentTagsInput.value);
+        momentTagsInput.value = "";
+      }
+    },
+    { signal },
+  );
+
   // ---------- 文章管理 ----------
 
   const fillFormFromArticle = (
@@ -305,26 +415,26 @@ export function initWritePage() {
       typeof data.routeSlug === "string" && data.routeSlug
         ? data.routeSlug
         : fileSlug;
-    if (archiveDirInput) archiveDirInput.value = dirParts.join("/");
-    if (createdAtInput) {
-      createdAtInput.value =
-        typeof data.createdAt === "string" ? data.createdAt.slice(0, 10) : "";
-    }
     if (typeInput)
       typeInput.value = typeof data.type === "string" ? data.type : "";
     if (formatSelect) formatSelect.value = extension;
-    if (descriptionInput) {
-      descriptionInput.value =
-        typeof data.description === "string" ? data.description : "";
-    }
     if (coverInput) {
       coverInput.value = typeof data.image === "string" ? data.image : "";
     }
-    if (publishedInput) publishedInput.checked = data.published !== false;
-    bodyInput.value = body;
+    // MDX 的 JSX/指令语法会被 WYSIWYG 往返转换破坏，改用 Markdown 源码模式
+    bodyEditor.changeMode(extension === "mdx" ? "markdown" : "wysiwyg", true);
+    bodyEditor.setMarkdown(body);
 
     mode = "edit";
     originalPath = path;
+    editArchiveDir = dirParts.join("/");
+    editCreatedAt =
+      typeof data.createdAt === "string" && data.createdAt
+        ? data.createdAt
+        : formatDateLocal();
+    editDescription =
+      typeof data.description === "string" ? data.description : "";
+    editPublished = data.published !== false;
     images = [];
     renderImages();
     setPublishLabel();
@@ -361,7 +471,7 @@ export function initWritePage() {
               const article = await loadArticle(publishConfig, item.path);
               fillFormFromArticle(article.path, article.data, article.body);
               switchTab("edit");
-              setStatus(`Loaded ${item.name} — ready to edit`, "ok");
+              setStatus("");
             } catch (error) {
               handleError(error);
             } finally {
@@ -388,7 +498,7 @@ export function initWritePage() {
               await deleteArticle(publishConfig, item.path, (message) =>
                 setStatus(message),
               );
-              setStatus(`Deleted ${item.name}`, "ok");
+              setStatus("");
               await refreshArticleList();
             } catch (error) {
               handleError(error);
@@ -403,7 +513,7 @@ export function initWritePage() {
         articleList.append(listItem);
       }
 
-      setStatus(`${items.length} posts found`, "ok");
+      setStatus("");
     } catch (error) {
       handleError(error);
     } finally {
@@ -444,7 +554,7 @@ export function initWritePage() {
     await savePem(pem, publishConfig.encryptKey);
     if (pemInput) pemInput.value = "";
     await refreshAuthView();
-    setStatus("Key saved (kept for this session only)", "ok");
+    setStatus("");
   };
 
   authSaveButton?.addEventListener(
@@ -477,7 +587,7 @@ export function initWritePage() {
     async () => {
       clearAuth();
       await refreshAuthView();
-      setStatus("Signed out; the local key has been cleared");
+      setStatus("");
     },
     { signal },
   );
@@ -500,18 +610,14 @@ export function initWritePage() {
     { signal },
   );
 
-  imageAddButton?.addEventListener("click", () => imageInput?.click(), {
-    signal,
-  });
-
-  imageInput?.addEventListener(
+  // 选择 MDX 格式时切到 Markdown 源码模式，避免 WYSIWYG 破坏 MDX 语法
+  formatSelect?.addEventListener(
     "change",
     () => {
-      for (const file of Array.from(imageInput.files || [])) {
-        images.push({ id: crypto.randomUUID(), file });
-      }
-      imageInput.value = "";
-      renderImages();
+      bodyEditor.changeMode(
+        formatSelect.value === "mdx" ? "markdown" : "wysiwyg",
+        true,
+      );
     },
     { signal },
   );
@@ -555,45 +661,30 @@ export function initWritePage() {
 
   // ---------- 瞬间发布 ----------
 
-  momentImageAddButton?.addEventListener(
-    "click",
-    () => momentImageInput?.click(),
-    { signal },
-  );
-
-  momentImageInput?.addEventListener(
-    "change",
-    () => {
-      for (const file of Array.from(momentImageInput.files || [])) {
-        momentImages.push({ id: crypto.randomUUID(), file });
-      }
-      momentImageInput.value = "";
-      renderMomentImages();
-    },
-    { signal },
-  );
-
   momentPublishButton?.addEventListener(
     "click",
     async () => {
-      if (busy) return;
+      if (busy || !momentEditor) return;
       setBusy(true);
       try {
-        const tags = (momentTagsInput?.value || "")
-          .split(/[,，]/)
-          .map((tag) => tag.trim())
-          .filter(Boolean);
+        if (momentTagsInput?.value.trim()) {
+          addMomentTag(momentTagsInput.value);
+          momentTagsInput.value = "";
+        }
+        const tags = [...momentTags];
         await publishMoment(
           momentsConfig,
           {
-            content: momentContentInput?.value ?? "",
+            content: momentEditor.getMarkdown(),
             tags,
             images: momentImages,
           },
           (message) => setStatus(message),
         );
-        if (momentContentInput) momentContentInput.value = "";
+        momentEditor.setMarkdown("");
         if (momentTagsInput) momentTagsInput.value = "";
+        momentTags = [];
+        renderMomentTags();
         momentImages = [];
         renderMomentImages();
         setStatus(
@@ -611,12 +702,6 @@ export function initWritePage() {
 
   // ---------- 初始化 ----------
 
-  if (createdAtInput && !createdAtInput.value) {
-    createdAtInput.value = formatDateLocal();
-  }
-  if (archiveDirInput && !archiveDirInput.value) {
-    archiveDirInput.value = writeConfig.content.defaultArchiveDir;
-  }
   setPublishLabel();
   void refreshAuthView();
 }

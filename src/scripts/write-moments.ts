@@ -75,10 +75,12 @@ export async function publishMoment(
   const now = new Date();
   const id = momentId(now);
   const treeItems: TreeItem[] = [];
+  let body = draft.content.trim();
 
-  // 附件图片上传后以 Markdown 形式追加到正文末尾（同内容 hash 去重）
+  // 上传正文引用到的本地图片（编辑器插入的预览链接），替换为仓库路径；
+  // 未被正文引用的附件追加到末尾。同内容（同 hash）只上传一次。
   const uploadedHashes = new Set<string>();
-  const imageLines: string[] = [];
+  const appendLines: string[] = [];
   let index = 1;
   for (const image of draft.images) {
     progress(`Uploading image (${index++}/${draft.images.length})...`);
@@ -105,16 +107,18 @@ export async function publishMoment(
       uploadedHashes.add(hash);
     }
 
-    imageLines.push(`![](${publicPath})`);
+    if (image.previewUrl && body.includes(image.previewUrl)) {
+      body = body.split(image.previewUrl).join(publicPath);
+    } else {
+      appendLines.push(`![](${publicPath})`);
+    }
   }
 
   progress("Preparing moment content...");
-  const body = [draft.content.trim(), imageLines.join("\n")]
-    .filter(Boolean)
-    .join("\n\n");
+  const finalBody = [body, appendLines.join("\n")].filter(Boolean).join("\n\n");
   const finalContent = stringifyArticle(
     { createdAt: formatDateTimeLocal(now), tags: draft.tags },
-    body,
+    finalBody,
   );
 
   const momentBlob = await createBlob(

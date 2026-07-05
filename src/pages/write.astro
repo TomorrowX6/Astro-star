@@ -48,8 +48,7 @@ const description = "Write and publish from the browser";
         data-write-pem
         rows="8"
         autocomplete="off"
-        spellcheck="false"
-        placeholder="-----BEGIN RSA PRIVATE KEY-----"></textarea>
+        spellcheck="false"></textarea>
       <div class="write-actions">
         <button
           type="button"
@@ -96,39 +95,12 @@ const description = "Write and publish from the browser";
               />
             </label>
             <label class="write-field">
-              <span class="write-field__label">Slug (file name)</span>
-              <input
-                class="write-input"
-                type="text"
-                data-write-field="slug"
-                placeholder="Generated from title if empty"
-              />
-            </label>
-            <label class="write-field">
-              <span class="write-field__label">Archive folder</span>
-              <input
-                class="write-input"
-                type="text"
-                data-write-field="archiveDir"
-                placeholder="e.g. 2026; empty = root"
-              />
-            </label>
-            <label class="write-field">
-              <span class="write-field__label">Created date</span>
-              <input
-                class="write-input"
-                type="date"
-                data-write-field="createdAt"
-              />
+              <span class="write-field__label">Slug</span>
+              <input class="write-input" type="text" data-write-field="slug" />
             </label>
             <label class="write-field">
               <span class="write-field__label">Type label</span>
-              <input
-                class="write-input"
-                type="text"
-                data-write-field="type"
-                placeholder="e.g. Tech / Life, optional"
-              />
+              <input class="write-input" type="text" data-write-field="type" />
             </label>
             <label class="write-field">
               <span class="write-field__label">File format</span>
@@ -138,53 +110,17 @@ const description = "Write and publish from the browser";
               </select>
             </label>
             <label class="write-field write-field--full">
-              <span class="write-field__label">Description</span>
-              <textarea
-                class="write-textarea"
-                data-write-field="description"
-                rows="2"></textarea>
-            </label>
-            <label class="write-field write-field--full">
               <span class="write-field__label">Cover</span>
-              <input
-                class="write-input"
-                type="text"
-                data-write-field="cover"
-                placeholder="https:// image URL, or pick “Use as cover” below"
-              />
-            </label>
-            <label class="write-field write-field--inline">
-              <input type="checkbox" data-write-field="published" checked />
-              <span class="write-field__label"
-                >Public (uncheck to keep as a hidden draft)</span
-              >
+              <input class="write-input" type="text" data-write-field="cover" />
             </label>
           </div>
 
-          <div class="write-images">
-            <div class="write-actions">
-              <button type="button" class="write-button" data-write-image-add>
-                Add images
-              </button>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                data-write-image-input
-                hidden
-              />
-            </div>
-            <ul class="write-image-list" data-write-image-list></ul>
-          </div>
+          <ul class="write-image-list" data-write-image-list></ul>
 
-          <label class="write-field write-field--full">
-            <span class="write-field__label">Body (Markdown)</span>
-            <textarea
-              class="write-textarea write-textarea--body"
-              data-write-field="body"
-              rows="18"
-              spellcheck="false"></textarea>
-          </label>
+          <div class="write-field write-field--full">
+            <span class="write-field__label">Body</span>
+            <div class="write-editor" data-write-body-editor></div>
+          </div>
 
           <div class="write-actions">
             <button
@@ -202,38 +138,21 @@ const description = "Write and publish from the browser";
       </div>
 
       <div data-write-panel="moment" hidden>
-        <label class="write-field write-field--full">
-          <span class="write-field__label">Moment (Markdown)</span>
-          <textarea
-            class="write-textarea"
-            data-write-moment-content
-            rows="6"
-            placeholder="What's on your mind?"></textarea>
-        </label>
-        <label class="write-field write-field--full">
+        <div class="write-field write-field--full">
+          <span class="write-field__label">Moment</span>
+          <div class="write-editor" data-write-moment-editor></div>
+        </div>
+        <div class="write-field write-field--full">
           <span class="write-field__label">Tags</span>
-          <input
-            class="write-input"
-            type="text"
-            data-write-moment-tags
-            placeholder="Comma separated, optional"
-          />
-        </label>
+          <div class="write-tags" data-write-moment-tags-box>
+            <input
+              class="write-tags__input"
+              type="text"
+              data-write-moment-tags
+            />
+          </div>
+        </div>
         <div class="write-actions">
-          <button
-            type="button"
-            class="write-button"
-            data-write-moment-image-add
-          >
-            Add images
-          </button>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            data-write-moment-image-input
-            hidden
-          />
           <button
             type="button"
             class="write-button write-button--primary"

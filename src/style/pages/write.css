@@ -133,6 +133,89 @@
   margin-bottom: 0.75rem;
 }
 
+/* ---------- 富文本编辑器（Toast UI） ---------- */
+
+/* 初始高度由脚本传入（26rem），右下角可拖拽自由拉伸 */
+.write-page .write-editor {
+  width: 100%;
+  min-height: 12rem;
+  resize: vertical;
+  overflow: auto;
+}
+
+/* 内部 UI 跟随宿主拉伸后的实际高度 */
+.write-page .write-editor .toastui-editor-defaultUI {
+  height: 100%;
+}
+
+/* 编辑器边框与站点控件风格对齐 */
+.write-page .write-editor .toastui-editor-defaultUI {
+  border: 1px solid var(--border-soft);
+  border-radius: calc(var(--radius-md) / 2);
+  overflow: hidden;
+}
+
+/* ---------- 标签胶囊输入 ---------- */
+
+.write-page .write-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  border: 1px solid var(--border-soft);
+  border-radius: calc(var(--radius-md) / 2);
+  padding: 0.35rem 0.5rem;
+}
+
+.write-page .write-tags:focus-within {
+  outline: 2px solid var(--line-soft);
+  outline-offset: 1px;
+}
+
+.write-page .write-tags__input {
+  appearance: none;
+  flex: 1;
+  min-width: 8rem;
+  border: none;
+  background: transparent;
+  color: var(--line);
+  font: inherit;
+  font-size: var(--type-sm);
+  padding: 0.2rem 0.25rem;
+}
+
+.write-page .write-tags__input:focus-visible {
+  outline: none;
+}
+
+.write-page .write-tags__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 0.15rem 0.3rem 0.15rem 0.6rem;
+  color: var(--line);
+  font-size: var(--type-xs);
+  white-space: nowrap;
+}
+
+.write-page .write-tags__remove {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--type-sm);
+  line-height: 1;
+  padding: 0 0.25rem;
+  cursor: pointer;
+}
+
+.write-page .write-tags__remove:hover {
+  color: var(--line);
+}
+
 /* ---------- 按钮与操作行 ---------- */
 
 .write-page .write-actions {

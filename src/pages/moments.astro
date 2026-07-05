@@ -82,45 +82,7 @@ const description = "Fragments, sparks, and passing thoughts";
       <p class="content-page-description">{description}</p>
     </header>
 
-    <section
-      class="moment-composer"
-      aria-label="Post a new moment"
-      data-moment-composer
-      hidden
-    >
-      <textarea
-        class="moment-composer__input"
-        data-moment-content
-        rows="4"
-        placeholder="What's on your mind?"></textarea>
-      <input
-        class="moment-composer__tags"
-        type="text"
-        data-moment-tags
-        placeholder="Tags, comma separated (optional)"
-      />
-      <div class="moment-composer__actions">
-        <button type="button" class="moment-button" data-moment-image-add>
-          Add images
-        </button>
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          data-moment-image-input
-          hidden
-        />
-        <button
-          type="button"
-          class="moment-button moment-button--primary"
-          data-moment-publish
-        >
-          Post moment
-        </button>
-      </div>
-      <ul class="moment-composer__images" data-moment-image-list></ul>
-      <p class="moment-status" role="status" data-moment-status></p>
-    </section>
+    <p class="moment-status" role="status" data-moment-status></p>
 
     {
       activityEntries.length > 0 && (
