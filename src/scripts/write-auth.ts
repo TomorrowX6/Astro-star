@@ -137,6 +137,17 @@ export async function hasAuth(encryptKey: string): Promise<boolean> {
  * 无私钥时抛出异常，调用方应引导用户先粘贴私钥。
  */
 export async function getAuthToken(config: WriteAuthConfig): Promise<string> {
+  if (!config.appId.trim()) {
+    throw new Error(
+      "GitHub App ID is not configured. Set PUBLIC_GITHUB_APP_ID in the deployment environment and rebuild.",
+    );
+  }
+  if (!config.owner.trim() || !config.repo.trim()) {
+    throw new Error(
+      "GitHub repository is not configured. Set PUBLIC_GITHUB_OWNER and PUBLIC_GITHUB_REPO in the deployment environment and rebuild.",
+    );
+  }
+
   const cached = getCachedToken();
   if (cached) return cached;
 
