@@ -33,6 +33,26 @@ type WritePageWindow = Window & {
 
 type StatusKind = "info" | "ok" | "error";
 
+type WriteDraft = {
+  version: 1;
+  activePanel: "edit" | "moment" | "manage";
+  mode: "create" | "edit";
+  originalPath?: string;
+  editArchiveDir: string;
+  editCreatedAt: string;
+  editDescription: string;
+  editPublished: boolean;
+  title: string;
+  slug: string;
+  type: string;
+  fileFormat: "md" | "mdx";
+  cover: string;
+  body: string;
+  momentBody: string;
+  momentTags: string[];
+  momentTagsInput: string;
+};
+
 const publishConfig: WritePublishConfig = {
   appId: writeConfig.github.appId,
   owner: writeConfig.github.owner,
@@ -50,6 +70,55 @@ const momentsConfig: WritePublishConfig = {
   imagesDir: writeConfig.moments.imagesDir,
   imagesPublicBase: writeConfig.moments.imagesPublicBase,
 };
+
+function getDraftStorageKey(config: WritePublishConfig): string {
+  return [
+    "write_draft_v1",
+    config.owner,
+    config.repo,
+    config.branch,
+    config.contentDir,
+  ]
+    .map(encodeURIComponent)
+    .join(":");
+}
+
+function readStoredValue(key: string): string | null {
+  for (const storage of [globalThis.localStorage, globalThis.sessionStorage]) {
+    try {
+      const value = storage?.getItem(key);
+      if (value !== null && value !== undefined) return value;
+    } catch {
+      // Ignore storage failures and fall back to the next store.
+    }
+  }
+  return null;
+}
+
+function writeStoredValue(key: string, value: string): void {
+  let wrote = false;
+  for (const storage of [globalThis.localStorage, globalThis.sessionStorage]) {
+    try {
+      storage?.setItem(key, value);
+      wrote = true;
+    } catch {
+      // Ignore storage failures; the other store may still work.
+    }
+  }
+  if (!wrote) {
+    // Silently degrade when storage is unavailable.
+  }
+}
+
+function removeStoredValue(key: string): void {
+  for (const storage of [globalThis.localStorage, globalThis.sessionStorage]) {
+    try {
+      storage?.removeItem(key);
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+}
 
 function createEditor(
   element: HTMLElement,
@@ -179,6 +248,126 @@ export function initWritePage() {
   let editPublished = true;
   let pendingDeletePath: string | null = null;
   let busy = false;
+  let activePanel: "edit" | "moment" | "manage" = "edit";
+  let draftSaveTimer: number | undefined;
+  const draftStorageKey = getDraftStorageKey(publishConfig);
+
+  const readDraft = (): WriteDraft | null => {
+    const raw = readStoredValue(draftStorageKey);
+    if (!raw) return null;
+    try {
+      const draft = JSON.parse(raw) as Partial<WriteDraft>;
+      if (draft.version !== 1) return null;
+      if (
+        draft.activePanel !== "edit" &&
+        draft.activePanel !== "moment" &&
+        draft.activePanel !== "manage"
+      ) {
+        return null;
+      }
+      if (draft.mode !== "create" && draft.mode !== "edit") return null;
+      return {
+        version: 1,
+        activePanel: draft.activePanel,
+        mode: draft.mode,
+        originalPath:
+          typeof draft.originalPath === "string"
+            ? draft.originalPath
+            : undefined,
+        editArchiveDir:
+          typeof draft.editArchiveDir === "string" ? draft.editArchiveDir : "",
+        editCreatedAt:
+          typeof draft.editCreatedAt === "string" ? draft.editCreatedAt : "",
+        editDescription:
+          typeof draft.editDescription === "string"
+            ? draft.editDescription
+            : "",
+        editPublished: draft.editPublished !== false,
+        title: typeof draft.title === "string" ? draft.title : "",
+        slug: typeof draft.slug === "string" ? draft.slug : "",
+        type: typeof draft.type === "string" ? draft.type : "",
+        fileFormat: draft.fileFormat === "mdx" ? "mdx" : "md",
+        cover: typeof draft.cover === "string" ? draft.cover : "",
+        body: typeof draft.body === "string" ? draft.body : "",
+        momentBody:
+          typeof draft.momentBody === "string" ? draft.momentBody : "",
+        momentTags: Array.isArray(draft.momentTags)
+          ? draft.momentTags.filter(
+              (tag): tag is string => typeof tag === "string",
+            )
+          : [],
+        momentTagsInput:
+          typeof draft.momentTagsInput === "string"
+            ? draft.momentTagsInput
+            : "",
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const saveDraftNow = () => {
+    const draft: WriteDraft = {
+      version: 1,
+      activePanel,
+      mode,
+      originalPath,
+      editArchiveDir,
+      editCreatedAt,
+      editDescription,
+      editPublished,
+      title: titleInput.value,
+      slug: slugInput.value,
+      type: typeInput?.value || "",
+      fileFormat: formatSelect?.value === "mdx" ? "mdx" : "md",
+      cover: coverInput?.value || "",
+      body: bodyEditor.getMarkdown(),
+      momentBody: momentEditor?.getMarkdown() || "",
+      momentTags: [...momentTags],
+      momentTagsInput: momentTagsInput?.value || "",
+    };
+    writeStoredValue(draftStorageKey, JSON.stringify(draft));
+  };
+
+  const scheduleDraftSave = () => {
+    if (draftSaveTimer) clearTimeout(draftSaveTimer);
+    draftSaveTimer = window.setTimeout(() => {
+      draftSaveTimer = undefined;
+      saveDraftNow();
+    }, 150);
+  };
+
+  const applyDraft = (draft: WriteDraft) => {
+    activePanel = draft.activePanel;
+    mode = draft.mode;
+    originalPath = draft.originalPath;
+    editArchiveDir = draft.editArchiveDir;
+    editCreatedAt = draft.editCreatedAt;
+    editDescription = draft.editDescription;
+    editPublished = draft.editPublished;
+
+    titleInput.value = draft.title;
+    slugInput.value = draft.slug;
+    if (typeInput) typeInput.value = draft.type;
+    if (formatSelect) formatSelect.value = draft.fileFormat;
+    if (coverInput) coverInput.value = draft.cover;
+
+    bodyEditor.changeMode(
+      draft.fileFormat === "mdx" ? "markdown" : "wysiwyg",
+      true,
+    );
+    bodyEditor.setMarkdown(draft.body);
+
+    if (momentEditor) {
+      momentEditor.setMarkdown(draft.momentBody);
+    }
+    if (momentTagsInput) momentTagsInput.value = draft.momentTagsInput;
+    momentTags = [...draft.momentTags];
+    renderMomentTags();
+    renderImages();
+    setPublishLabel();
+    switchTab(draft.activePanel);
+  };
 
   // ---------- 状态与面板切换 ----------
 
@@ -203,13 +392,22 @@ export function initWritePage() {
   };
 
   const switchTab = (name: string) => {
+    activePanel = name === "moment" || name === "manage" ? name : "edit";
     for (const button of tabButtons) {
-      button.classList.toggle("is-active", button.dataset.writeTab === name);
+      button.classList.toggle(
+        "is-active",
+        button.dataset.writeTab === activePanel,
+      );
     }
     for (const panel of panels) {
-      panel.toggleAttribute("hidden", panel.dataset.writePanel !== name);
+      panel.toggleAttribute("hidden", panel.dataset.writePanel !== activePanel);
     }
-    if (name === "manage" && articleList && !articleList.childElementCount) {
+    scheduleDraftSave();
+    if (
+      activePanel === "manage" &&
+      articleList &&
+      !articleList.childElementCount
+    ) {
       void refreshArticleList();
     }
   };
@@ -236,6 +434,7 @@ export function initWritePage() {
     renderImages();
     setPublishLabel();
     setStatus("");
+    saveDraftNow();
   };
 
   const buildForm = (): ArticleForm => {
@@ -358,6 +557,7 @@ export function initWritePage() {
       chip.append(removeButton);
       momentTagsBox.insertBefore(chip, momentTagsInput);
     }
+    saveDraftNow();
   };
 
   const addMomentTag = (raw: string) => {
@@ -372,8 +572,10 @@ export function initWritePage() {
     (event) => {
       if (event.key === "Enter" || event.key === "," || event.key === "、") {
         event.preventDefault();
-        addMomentTag(momentTagsInput.value);
+        const tagInputValue = momentTagsInput.value;
         momentTagsInput.value = "";
+        addMomentTag(tagInputValue);
+        saveDraftNow();
         return;
       }
       if (event.key === "Backspace" && !momentTagsInput.value) {
@@ -388,8 +590,10 @@ export function initWritePage() {
     "blur",
     () => {
       if (momentTagsInput.value.trim()) {
-        addMomentTag(momentTagsInput.value);
+        const tagInputValue = momentTagsInput.value;
         momentTagsInput.value = "";
+        addMomentTag(tagInputValue);
+        saveDraftNow();
       }
     },
     { signal },
@@ -438,6 +642,8 @@ export function initWritePage() {
     images = [];
     renderImages();
     setPublishLabel();
+    activePanel = "edit";
+    saveDraftNow();
   };
 
   const refreshArticleList = async () => {
@@ -546,6 +752,11 @@ export function initWritePage() {
 
   // ---------- 事件绑定 ----------
 
+  const initialDraft = readDraft();
+  if (initialDraft) {
+    applyDraft(initialDraft);
+  }
+
   const savePemText = async (pem: string) => {
     if (!pem.includes("PRIVATE KEY")) {
       setStatus("Invalid key: paste a complete PEM private key", "error");
@@ -592,6 +803,9 @@ export function initWritePage() {
     { signal },
   );
 
+  bodyEditor.on("change", scheduleDraftSave);
+  momentEditor?.on("change", scheduleDraftSave);
+
   for (const button of tabButtons) {
     button.addEventListener(
       "click",
@@ -605,6 +819,7 @@ export function initWritePage() {
     () => {
       if (!slugInput.value.trim() && titleInput.value.trim()) {
         slugInput.value = slugifyCategoryLabel(titleInput.value);
+        scheduleDraftSave();
       }
     },
     { signal },
@@ -618,9 +833,15 @@ export function initWritePage() {
         formatSelect.value === "mdx" ? "markdown" : "wysiwyg",
         true,
       );
+      scheduleDraftSave();
     },
     { signal },
   );
+
+  form.addEventListener("input", scheduleDraftSave, { signal });
+  momentTagsInput?.addEventListener("input", scheduleDraftSave, { signal });
+  browserWindow.addEventListener("pagehide", saveDraftNow, { signal });
+  browserWindow.addEventListener("beforeunload", saveDraftNow, { signal });
 
   resetButton?.addEventListener("click", resetForm, { signal });
 
