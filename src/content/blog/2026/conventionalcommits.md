@@ -1,0 +1,37 @@
+---
+routeSlug: "conventionalcommits"
+title: "约定式提交"
+image: "https://cdn.jsdelivr.net/gh/miuna-pic/picx-images-hosting@master/1_vDNSUqlGVEhK2Zf8fBIqFg.2kslki2uzg.jpg"
+createdAt: "2026-07-05"
+type: "git"
+---
+
+#### 概括
+
+**fix**: 类型 为 fix 的提交表示在代码库中修复了一个 bug
+**feat**: 类型 为 feat 的提交表示在代码库中新增了一个功能
+**build**: 用于修改项目构建系统，例如修改依赖库、外部接口或者升级 Node 版本等；
+**chore**: 用于对非业务性代码进行修改，例如修改构建流程或者工具配置等；
+**ci**: 用于修改持续集成流程，例如修改 Travis、Jenkins 等工作流配置；
+**docs**: 用于修改文档，例如修改 README 文件、API 文档等；
+**style**: 用于修改代码的样式，例如调整缩进、空格、空行等；
+**refactor**: 用于重构代码，例如修改代码结构、变量名、函数名等但不修改功能逻辑；
+**perf**: 用于优化性能，例如提升代码的性能、减少内存占用等；
+**test**: 用于修改测试用例，例如添加、删除、修改代码的测试用例等。
+
+**BREAKING CHANGE**: 在脚注中包含 BREAKING CHANGE: 或 <类型>(范围) 后面有一个 ! 的提交，表示引入了破坏性 API 变更（这和语义化版本中的 MAJOR 相对应）。 破坏性变更可以是任意 类型 提交的一部分。
+
+#### 示例
+
+包含了 ! 和 BREAKING CHANGE 脚注的提交说明
+
+```
+feat!: drop support for Node 6
+
+BREAKING CHANGE: use JavaScript features not available in Node 6.
+```
+
+```
+git commit -m "feat!: drop support for Node 6" -m "BREAKING CHANGE: use JavaScript features not available in Node 6."
+```
+
