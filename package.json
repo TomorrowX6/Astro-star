@@ -28,6 +28,7 @@
       "better-sqlite3"
     ],
     "overrides": {
+      "dompurify": "3.4.11",
       "esbuild": "0.28.1",
       "volar-service-yaml": "0.0.71"
     }
