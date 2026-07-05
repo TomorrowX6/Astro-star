@@ -3,68 +3,40 @@ name: Build & Deploy
 on:
   workflow_dispatch:
   push:
-    branches: [main, Ethan]
+    branches: [main]
+
+# GitHub Pages 部署所需权限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
-  group: deploy-production
+  group: deploy-pages
   cancel-in-progress: false
 
-env:
-  SSH_USER: ${{ vars.SSH_USER || 'ubuntu' }}
-  SSH_PORT: ${{ vars.SSH_PORT || '22' }}
-  DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/Astro-star' }}
-  PM2_APP_NAME: ${{ vars.PM2_APP_NAME || 'Astro-star' }}
-  APP_PORT: ${{ vars.APP_PORT || '4321' }}
-
 jobs:
-  deploy:
-    if: >-
-      (github.repository == 'hanlife02/Astro-star' && github.ref_name == 'Ethan') ||
-      (github.repository != 'hanlife02/Astro-star' && github.ref_name == 'main')
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          token: ${{ secrets.ACTIONS_PAT || github.token }}
 
-      # ── Source hash: skip build if nothing changed ──
-      - name: Compute source hash
-        id: hash
-        run: |
-          HASH=${{ hashFiles('src/**', 'scripts/**', 'public/**', 'package.json', 'pnpm-lock.yaml', 'astro.config.mjs', '.github/workflows/deploy.yml', 'ecosystem.config.cjs') }}
-          echo "source_hash=$HASH" >> "$GITHUB_OUTPUT"
-
-      - name: Check hash cache
-        id: cache
-        uses: actions/cache@v5
-        with:
-          path: .hash-marker
-          key: deploy-hash-${{ steps.hash.outputs.source_hash }}
-
-      - name: Skip notice
-        if: steps.cache.outputs.cache-hit == 'true'
-        run: echo "Source unchanged — skipping build & deploy."
-
-      # ── Build ──
       - name: Setup Node.js
-        if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/setup-node@v5
         with:
           node-version: 22
           package-manager-cache: false
 
       - name: Setup pnpm
-        if: steps.cache.outputs.cache-hit != 'true'
         run: corepack enable
 
       - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        if: steps.cache.outputs.cache-hit != 'true'
         env:
           WALINE_SERVER_URL: ${{ secrets.WALINE_SERVER_URL || secrets.PUBLIC_WALINE_SERVER_URL || vars.WALINE_SERVER_URL || vars.PUBLIC_WALINE_SERVER_URL }}
           PUBLIC_WALINE_SERVER_URL: ${{ secrets.PUBLIC_WALINE_SERVER_URL || secrets.WALINE_SERVER_URL || vars.PUBLIC_WALINE_SERVER_URL || vars.WALINE_SERVER_URL }}
@@ -73,59 +45,29 @@ jobs:
           PUBLIC_GITHUB_BRANCH: ${{ vars.PUBLIC_GITHUB_BRANCH }}
           PUBLIC_GITHUB_APP_ID: ${{ vars.PUBLIC_GITHUB_APP_ID }}
           PUBLIC_WRITE_ENCRYPT_KEY: ${{ vars.PUBLIC_WRITE_ENCRYPT_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CODETIME_TOKEN: ${{ secrets.CODETIME_TOKEN }}
         run: pnpm build
 
       - name: Sync Algolia index
-        if: steps.cache.outputs.cache-hit != 'true'
         continue-on-error: true
         env:
           ALGOLIA_WRITE_API_KEY: ${{ secrets.ALGOLIA_WRITE_API_KEY }}
           ALGOLIA_ADMIN_API_KEY: ${{ secrets.ALGOLIA_ADMIN_API_KEY }}
         run: pnpm run algolia:sync
 
-      # ── Deploy via rsync + SSH ──
-      - name: Setup SSH
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p ${{ env.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
 
-      - name: Rsync to server
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          rsync -a --checksum --delete \
-            --exclude='node_modules' \
-            --exclude='.env' \
-            -e "ssh -i ~/.ssh/deploy_key -p ${{ env.SSH_PORT }}" \
-            dist/ package.json pnpm-lock.yaml ecosystem.config.cjs \
-            ${{ env.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/
-
-      - name: Deploy runtime env vars
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          {
-            echo "WALINE_SERVER_URL=${{ secrets.WALINE_SERVER_URL || secrets.PUBLIC_WALINE_SERVER_URL || vars.WALINE_SERVER_URL || vars.PUBLIC_WALINE_SERVER_URL }}"
-            echo "PUBLIC_WALINE_SERVER_URL=${{ secrets.PUBLIC_WALINE_SERVER_URL || secrets.WALINE_SERVER_URL || vars.PUBLIC_WALINE_SERVER_URL || vars.WALINE_SERVER_URL }}"
-            echo "CODETIME_TOKEN=${{ secrets.CODETIME_TOKEN }}"
-          } | \
-            ssh -i ~/.ssh/deploy_key -p ${{ env.SSH_PORT }} \
-              ${{ env.SSH_USER }}@${{ secrets.SSH_HOST }} \
-              "cat > ${{ env.DEPLOY_PATH }}/.env"
-
-      - name: Install & restart on server
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          ssh -i ~/.ssh/deploy_key -p ${{ env.SSH_PORT }} \
-            ${{ env.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "source ~/.nvm/nvm.sh 2>/dev/null; source ~/.bashrc 2>/dev/null; cd ${{ env.DEPLOY_PATH }} && pnpm install --prod --frozen-lockfile && pm2 stop ${{ env.PM2_APP_NAME }} 2>/dev/null; pm2 delete ${{ env.PM2_APP_NAME }} 2>/dev/null; cd ${{ env.DEPLOY_PATH }} && PM2_APP_NAME=${{ env.PM2_APP_NAME }} PORT=${{ env.APP_PORT }} pm2 start ecosystem.config.cjs && pm2 save"
-
-      - name: Cleanup SSH
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: rm -f ~/.ssh/deploy_key
-
-      # ── Save hash marker on success ──
-      - name: Save hash marker
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: echo "${{ steps.hash.outputs.source_hash }}" > .hash-marker
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

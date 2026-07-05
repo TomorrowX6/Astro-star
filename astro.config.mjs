@@ -3,7 +3,6 @@ import { defineConfig, envField } from "astro/config";
 import mdx from "@astrojs/mdx";
 import { unified } from "@astrojs/markdown-remark";
 import sitemap from "@astrojs/sitemap";
-import node from "@astrojs/node";
 import rehypeKatex from "rehype-katex";
 import remarkDirective from "remark-directive";
 import remarkMath from "remark-math";
@@ -16,10 +15,6 @@ import { site } from "./src/config/site.ts";
 // https://astro.build/config
 export default defineConfig({
   site: site.site.url,
-  output: "server",
-  adapter: node({
-    mode: "standalone",
-  }),
   env: {
     schema: {
       WALINE_SERVER_URL: envField.string({
@@ -47,6 +42,8 @@ export default defineConfig({
   integrations: [
     mdx(),
     sitemap({
+      // /write 是私人入口（noindex），不进 sitemap
+      filter: (page) => !page.includes("/write"),
       serialize: createSitemapLastmodSerializer(site.site.url),
     }),
   ],

@@ -9,7 +9,7 @@ export const site = {
   },
   site: {
     name: "AzusaMoe",
-    url: "https://example.com",
+    url: "https://blog.000.moe",
     description:
       "Day before yesterday I saw a rabbit, and yesterday a deer, and today, you.",
     iconSrc: "/site-icon.svg",
