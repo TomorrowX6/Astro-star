@@ -1,8 +1,11 @@
 ---
-import { getCollection, render } from "astro:content";
+import { getCollection } from "astro:content";
+import { createMarkdownProcessor } from "@astrojs/markdown-remark";
 import ContentShell from "../components/layout/ContentShell.astro";
 import TocPanel from "../components/content/TocPanel.astro";
 import ArchiveActivityHeatmap from "../components/content/ArchiveActivityHeatmap.astro";
+import MomentLinkCard from "../components/content/MomentLinkCard.astro";
+import { extractMomentCards, type MomentCardData } from "../utils/moment-cards";
 import { site } from "../config/site";
 import "../style/pages/moments.css";
 
@@ -15,21 +18,28 @@ const entries = (await getCollection("moment")).sort(
 
 interface MomentView {
   entry: (typeof entries)[number];
-  Content: any;
+  html: string;
+  cards: MomentCardData[];
   anchorId: string;
   isoTime?: string;
   year: string;
   filePath: string;
 }
 
+// 正文里的平台链接（Bangumi/bilibili/GitHub/Steam/网易云/豆瓣/IMDb/YouTube）
+// 在构建时抽出并替换为链接卡片，剩余 Markdown 用 Astro 官方处理器渲染
+const markdownProcessor = await createMarkdownProcessor({ gfm: true });
+
 const moments: MomentView[] = [];
 for (const entry of entries) {
-  const { Content } = await render(entry);
+  const { cleanedBody, cards } = await extractMomentCards(entry.body ?? "");
+  const { code: html } = await markdownProcessor.render(cleanedBody);
   const parsed = new Date(entry.data.createdAt);
   const valid = !Number.isNaN(parsed.getTime());
   moments.push({
     entry,
-    Content,
+    html,
+    cards,
     anchorId: `moment-${entry.id.replace(/[^a-zA-Z0-9_-]/g, "-")}`,
     isoTime: valid ? parsed.toISOString() : undefined,
     year: valid ? String(parsed.getFullYear()) : "Undated",
@@ -106,7 +116,7 @@ const description = "Fragments, sparks, and passing thoughts";
               </h2>
               <ol class="moment-timeline" aria-label={`${group.year} timeline`}>
                 {group.items.map(
-                  ({ entry, Content, isoTime, filePath, anchorId }) => (
+                  ({ entry, html, cards, isoTime, filePath, anchorId }) => (
                     <li class="moment-card" id={anchorId}>
                       <img
                         class="moment-card__avatar"
@@ -134,9 +144,14 @@ const description = "Fragments, sparks, and passing thoughts";
                             Delete
                           </button>
                         </div>
-                        <div class="moment-card__content">
-                          <Content />
-                        </div>
+                        <div class="moment-card__content" set:html={html} />
+                        {cards.length > 0 && (
+                          <div class="moment-card__links">
+                            {cards.map((card) => (
+                              <MomentLinkCard card={card} />
+                            ))}
+                          </div>
+                        )}
                         {entry.data.tags && entry.data.tags.length > 0 && (
                           <div class="moment-card__tags">
                             {entry.data.tags.map((tag) => (

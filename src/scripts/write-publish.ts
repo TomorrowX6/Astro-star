@@ -22,6 +22,7 @@ import {
   stringifyArticle,
   type ArticleFrontmatter,
 } from "./write-frontmatter";
+import { assertValidMdxBody } from "./write-mdx-validate";
 
 export type WritePublishConfig = WriteAuthConfig & {
   branch: string;
@@ -130,6 +131,12 @@ export async function publishArticle(params: PublishParams): Promise<void> {
 
   if (!form.slug) throw new Error("Slug is required");
   if (!form.title) throw new Error("Title is required");
+
+  // mdx 语法错误会让 GitHub Actions 构建失败，必须在鉴权/上传前拦截
+  if (form.fileFormat === "mdx") {
+    progress("Validating MDX syntax...");
+    await assertValidMdxBody(form.body);
+  }
 
   progress("Verifying identity...");
   const token = await getAuthToken(config);

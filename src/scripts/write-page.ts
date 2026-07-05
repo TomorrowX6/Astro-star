@@ -3,7 +3,7 @@
  *
  * 正文与瞬间使用 Toast UI Editor（所见即所得，输出仍为 Markdown）。
  * Archive folder（当前年份）与 Created date（今天）自动生成，不再展示；
- * 编辑已有文章时保留其原目录、日期、description 与 published 状态。
+ * 编辑已有文章时保留其原目录、日期与 published 状态。
  */
 
 import Editor from "@toast-ui/editor";
@@ -40,9 +40,9 @@ type WriteDraft = {
   originalPath?: string;
   editArchiveDir: string;
   editCreatedAt: string;
-  editDescription: string;
   editPublished: boolean;
   title: string;
+  description: string;
   slug: string;
   type: string;
   fileFormat: "md" | "mdx";
@@ -186,6 +186,7 @@ export function initWritePage() {
   const field = <T extends HTMLElement>(name: string) =>
     root.querySelector<T>(`[data-write-field="${name}"]`);
   const titleInput = field<HTMLInputElement>("title");
+  const descriptionInput = field<HTMLInputElement>("description");
   const slugInput = field<HTMLInputElement>("slug");
   const typeInput = field<HTMLInputElement>("type");
   const formatSelect = field<HTMLSelectElement>("fileFormat");
@@ -244,7 +245,6 @@ export function initWritePage() {
   // 编辑模式下保留原文章的隐藏字段，更新时原样写回
   let editArchiveDir = "";
   let editCreatedAt = "";
-  let editDescription = "";
   let editPublished = true;
   let pendingDeletePath: string | null = null;
   let busy = false;
@@ -278,12 +278,16 @@ export function initWritePage() {
           typeof draft.editArchiveDir === "string" ? draft.editArchiveDir : "",
         editCreatedAt:
           typeof draft.editCreatedAt === "string" ? draft.editCreatedAt : "",
-        editDescription:
-          typeof draft.editDescription === "string"
-            ? draft.editDescription
-            : "",
         editPublished: draft.editPublished !== false,
         title: typeof draft.title === "string" ? draft.title : "",
+        description:
+          typeof draft.description === "string"
+            ? draft.description
+            : // 旧版草稿的隐藏字段，迁移为可见字段
+              typeof (draft as { editDescription?: unknown })
+                  .editDescription === "string"
+              ? ((draft as { editDescription: string }).editDescription ?? "")
+              : "",
         slug: typeof draft.slug === "string" ? draft.slug : "",
         type: typeof draft.type === "string" ? draft.type : "",
         fileFormat: draft.fileFormat === "mdx" ? "mdx" : "md",
@@ -314,9 +318,9 @@ export function initWritePage() {
       originalPath,
       editArchiveDir,
       editCreatedAt,
-      editDescription,
       editPublished,
       title: titleInput.value,
+      description: descriptionInput?.value || "",
       slug: slugInput.value,
       type: typeInput?.value || "",
       fileFormat: formatSelect?.value === "mdx" ? "mdx" : "md",
@@ -343,10 +347,10 @@ export function initWritePage() {
     originalPath = draft.originalPath;
     editArchiveDir = draft.editArchiveDir;
     editCreatedAt = draft.editCreatedAt;
-    editDescription = draft.editDescription;
     editPublished = draft.editPublished;
 
     titleInput.value = draft.title;
+    if (descriptionInput) descriptionInput.value = draft.description;
     slugInput.value = draft.slug;
     if (typeInput) typeInput.value = draft.type;
     if (formatSelect) formatSelect.value = draft.fileFormat;
@@ -426,7 +430,6 @@ export function initWritePage() {
     originalPath = undefined;
     editArchiveDir = "";
     editCreatedAt = "";
-    editDescription = "";
     editPublished = true;
     images = [];
     form.reset();
@@ -450,7 +453,7 @@ export function initWritePage() {
           : writeConfig.content.defaultArchiveDir,
       fileFormat: formatSelect?.value === "mdx" ? "mdx" : "md",
       title: titleInput.value.trim(),
-      description: editDescription,
+      description: descriptionInput?.value.trim() || "",
       createdAt: mode === "edit" ? editCreatedAt : formatDateLocal(),
       type: typeInput?.value.trim() || undefined,
       published: editPublished,
@@ -615,6 +618,10 @@ export function initWritePage() {
     const dirParts = relative.split("/").slice(0, -1);
 
     titleInput.value = typeof data.title === "string" ? data.title : "";
+    if (descriptionInput) {
+      descriptionInput.value =
+        typeof data.description === "string" ? data.description : "";
+    }
     slugInput.value =
       typeof data.routeSlug === "string" && data.routeSlug
         ? data.routeSlug
@@ -636,8 +643,6 @@ export function initWritePage() {
       typeof data.createdAt === "string" && data.createdAt
         ? data.createdAt
         : formatDateLocal();
-    editDescription =
-      typeof data.description === "string" ? data.description : "";
     editPublished = data.published !== false;
     images = [];
     renderImages();

@@ -26,6 +26,8 @@ declare module "@toast-ui/editor" {
     setMarkdown(markdown: string, cursorToEnd?: boolean): void;
     insertText(text: string): void;
     changeMode(mode: "markdown" | "wysiwyg", isWithoutFocus?: boolean): void;
+    on(type: string, handler: (...args: unknown[]) => void): void;
+    off(type: string): void;
     destroy(): void;
   }
 }

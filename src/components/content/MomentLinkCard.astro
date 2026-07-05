@@ -1,0 +1,57 @@
+---
+/**
+ * 瞬间链接卡片：纯展示组件，数据由 moment-cards.ts 归一化后经 props 传入。
+ * 样式见 src/style/pages/moments.css（.moment-link-card）。
+ */
+import type { MomentCardData } from "../../utils/moment-cards";
+
+interface Props {
+  card: MomentCardData;
+}
+
+const { card } = Astro.props;
+---
+
+<a
+  class="moment-link-card"
+  href={card.url}
+  target="_blank"
+  rel="noopener noreferrer"
+>
+  {
+    card.cover && (
+      <img
+        class="moment-link-card__cover"
+        src={card.cover}
+        alt=""
+        loading="lazy"
+        referrerpolicy="no-referrer"
+      />
+    )
+  }
+  <span class="moment-link-card__body">
+    <span class="moment-link-card__head">
+      <span class="moment-link-card__title">{card.title}</span>
+      <span class="moment-link-card__badge">{card.site}</span>
+    </span>
+    {
+      card.subtitle && (
+        <span class="moment-link-card__subtitle">{card.subtitle}</span>
+      )
+    }
+    {
+      card.description && (
+        <span class="moment-link-card__desc">{card.description}</span>
+      )
+    }
+    {
+      card.metas.length > 0 && (
+        <span class="moment-link-card__meta">
+          {card.metas.map((meta) => (
+            <span class="moment-link-card__meta-item">{meta}</span>
+          ))}
+        </span>
+      )
+    }
+  </span>
+</a>
