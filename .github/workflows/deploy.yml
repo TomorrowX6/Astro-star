@@ -75,7 +75,7 @@ jobs:
         continue-on-error: true
         uses: actions/deploy-pages@v5
         with:
-          timeout: 900000
+          timeout: 600000
           error_count: 20
           reporting_interval: 10000
 
@@ -84,7 +84,7 @@ jobs:
         if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v5
         with:
-          timeout: 900000
+          timeout: 600000
           error_count: 20
           reporting_interval: 10000
 
