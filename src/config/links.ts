@@ -32,6 +32,12 @@ export const friendLinks = [
     href: "https://hanlife02.com",
     avatarSrc: "https://hanlife02.com/avatar.svg",
   },
+  {
+    name: "KoBariDev",
+    description: "Ciallo～(∠・ω<)⌒★",
+    href: "https://hub.131714.xyz",
+    avatarSrc: "https://hub.131714.xyz/profile.png",
+  },
 ] satisfies readonly FriendLinkItem[];
 
 export const lostLinks = [
