@@ -19,10 +19,10 @@ export interface LinkApplyOwner {
 }
 
 export const linkApplyOwner = {
-  name: "Ethan",
-  description: "Don't stay awake for too long.",
-  href: "https://hanlife02.com",
-  avatarSrc: "https://hanlife02.com/avatar.svg",
+  name: "AzusaMoe",
+  description: "Day before yesterday I saw a rabbit, and yesterday a deer, and today, you.",
+  href: "https://000.moe",
+  avatarSrc: "https://blog.000.moe/avatar.png",
 } satisfies LinkApplyOwner;
 
 export const friendLinks = [
