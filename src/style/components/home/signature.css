@@ -15,7 +15,8 @@
 }
 
 .signature-mark[data-signature-src="true"] {
-  aspect-ratio: 394.2 / 97.4;
+  /* 与 public/signature.svg 的 width/height 保持一致（lolita.ttf 生成） */
+  aspect-ratio: 515.5 / 95.5;
   background-color: currentColor;
   mask-image: var(--signature-mask);
   mask-position: center;
