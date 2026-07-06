@@ -74,20 +74,14 @@ jobs:
         id: deployment
         continue-on-error: true
         uses: actions/deploy-pages@v5
-        with:
-          timeout: 600000
-          error_count: 20
-          reporting_interval: 10000
+
+      # Pages 后端返回 deployment_failed 属终态错误，action 会立即失败，
+      # 立刻重试会撞上同一次后端故障，必须等待后再重试
+      - name: Wait before retry
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 60
 
       - name: Retry Deploy to GitHub Pages
         id: deployment_retry
         if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v5
-        with:
-          timeout: 600000
-          error_count: 20
-          reporting_interval: 10000
-
-      - name: Fail if deployment retry failed
-        if: steps.deployment.outcome == 'failure' && steps.deployment_retry.outcome != 'success'
-        run: exit 1
